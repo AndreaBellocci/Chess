@@ -1,0 +1,16 @@
+﻿<?xml version="1.0"?>
+<!--Program-Generated Log File-->
+<Logs>
+    <main.cpp Log_Code="LOGS::L_INFO" Message="Game Window has been created" Function="main" Line="17"/>
+    <ChessAlgorithms.cpp Log_Code="Unrecognised exeption code" Error="&quot;Out of the board&quot;" Function="Castle" Line="153"/>
+    <ChessAlgorithms.cpp Log_Code="Unrecognised exeption code" Error="&quot;Out of the board&quot;" Function="Castle" Line="153"/>
+    <ChessAlgorithms.cpp Log_Code="Unrecognised exeption code" Error="&quot;Out of the board&quot;" Function="Castle" Line="153"/>
+    <ChessAlgorithms.cpp Log_Code="Unrecognised exeption code" Error="&quot;Out of the board&quot;" Function="Castle" Line="153"/>
+    <ChessAlgorithms.cpp Log_Code="Unrecognised exeption code" Error="&quot;Out of the board&quot;" Function="Castle" Line="153"/>
+    <ChessAlgorithms.cpp Log_Code="Unrecognised exeption code" Error="&quot;Out of the board&quot;" Function="Castle" Line="153"/>
+    <ChessAlgorithms.cpp Log_Code="Unrecognised exeption code" Error="&quot;Out of the board&quot;" Function="Castle" Line="153"/>
+    <ChessAlgorithms.cpp Log_Code="Unrecognised exeption code" Error="&quot;Out of the board&quot;" Function="Castle" Line="153"/>
+    <ChessAlgorithms.cpp Log_Code="Unrecognised exeption code" Error="&quot;Out of the board&quot;" Function="Castle" Line="153"/>
+    <ChessAlgorithms.cpp Log_Code="Unrecognised exeption code" Error="&quot;Out of the board&quot;" Function="Castle" Line="153"/>
+    <main.cpp Log_Code="LOGS::L_INFO" Message="Game Window has been released" Function="main" Line="79"/>
+</Logs>

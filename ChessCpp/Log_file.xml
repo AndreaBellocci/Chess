@@ -1,6 +1,0 @@
-﻿<?xml version="1.0"?>
-<!--Program-Generated Log File-->
-<Logs>
-    <main.cpp Log_Code="LOGS::L_INFO" Message="Game Window has been created" Function="main" Line="17"/>
-    <main.cpp Log_Code="LOGS::L_INFO" Message="Game Window has been released" Function="main" Line="79"/>
-</Logs>
