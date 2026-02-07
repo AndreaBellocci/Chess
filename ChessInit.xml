@@ -1,0 +1,164 @@
+<?xml version="1.0"?>
+<!--Defines the components for each piece-->
+<Initialization>
+
+	<FEN string="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"></FEN>
+
+	<Pieces>
+
+<!-- 
+============================================================================================================================================
+Black pieces
+============================================================================================================================================ 
+-->
+		<Black_Rook_1>
+			<Rendering ImagePath="../../assets/black_rook.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+		</Black_Rook_1>
+
+		<Black_Rook_2>
+			<Rendering ImagePath="../../assets/black_rook.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+		</Black_Rook_2>
+
+		<Black_Knight_1>
+			<Rendering ImagePath="../../assets/black_knight.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+		</Black_Knight_1>
+
+		<Black_Knight_2>
+			<Rendering ImagePath="../../assets/black_knight.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+		</Black_Knight_2>
+
+		<Black_Bishop_1>
+			<Rendering ImagePath="../../assets/black_bishop.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+		</Black_Bishop_1>
+
+		<Black_Bishop_2>
+			<Rendering ImagePath="../../assets/black_bishop.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+		</Black_Bishop_2>
+
+		<Black_Queen>
+			<Rendering ImagePath="../../assets/black_queen.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+		</Black_Queen>
+
+		<Black_King>
+			<Rendering ImagePath="../../assets/black_king.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+		</Black_King>
+
+		<Black_Pawn_1>
+			<Rendering ImagePath="../../assets/black_pawn.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+			<Promotion Promotion="0"/>
+		</Black_Pawn_1>
+
+		<Black_Pawn_2>
+			<Rendering ImagePath="../../assets/black_pawn.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+			<Promotion Promotion="0"/>
+		</Black_Pawn_2>
+
+		<Black_Pawn_3>
+			<Rendering ImagePath="../../assets/black_pawn.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+			<Promotion Promotion="0"/>
+		</Black_Pawn_3>
+
+		<Black_Pawn_4>
+			<Rendering ImagePath="../../assets/black_pawn.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+			<Promotion Promotion="0"/>
+		</Black_Pawn_4>
+
+		<Black_Pawn_5>
+			<Rendering ImagePath="../../assets/black_pawn.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+			<Promotion Promotion="0"/>
+		</Black_Pawn_5>
+
+		<Black_Pawn_6>
+			<Rendering ImagePath="../../assets/black_pawn.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+			<Promotion Promotion="0"/>
+		</Black_Pawn_6>
+
+		<Black_Pawn_7>
+			<Rendering ImagePath="../../assets/black_pawn.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+			<Promotion Promotion="0"/>
+		</Black_Pawn_7>
+
+		<Black_Pawn_8>
+			<Rendering ImagePath="../../assets/black_pawn.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+			<Promotion Promotion="0"/>
+		</Black_Pawn_8>
+
+<!-- 
+============================================================================================================================================
+White pieces
+============================================================================================================================================ 
+-->
+		<White_Rook_1>
+			<Rendering ImagePath="../../assets/white_rook.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+		</White_Rook_1>
+
+		<White_Rook_2>
+			<Rendering ImagePath="../../assets/white_rook.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+		</White_Rook_2>
+
+		<White_Knight_1>
+			<Rendering ImagePath="../../assets/white_knight.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+		</White_Knight_1>
+
+		<White_Knight_2>
+			<Rendering ImagePath="../../assets/white_knight.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+		</White_Knight_2>
+
+		<White_Bishop_1>
+			<Rendering ImagePath="../../assets/white_bishop.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+		</White_Bishop_1>
+
+		<White_Bishop_2>
+			<Rendering ImagePath="../../assets/white_bishop.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+		</White_Bishop_2>
+
+		<White_Queen>
+			<Rendering ImagePath="../../assets/white_queen.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+		</White_Queen>
+
+		<White_King>
+			<Rendering ImagePath="../../assets/white_king.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+		</White_King>
+
+		<White_Pawn_1>
+			<Rendering ImagePath="../../assets/white_pawn.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+			<Promotion Promotion="0"/>
+		</White_Pawn_1>
+
+		<White_Pawn_2>
+			<Rendering ImagePath="../../assets/white_pawn.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+			<Promotion Promotion="0"/>
+		</White_Pawn_2>
+
+		<White_Pawn_3>
+			<Rendering ImagePath="../../assets/white_pawn.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+			<Promotion Promotion="0"/>
+		</White_Pawn_3>
+
+		<White_Pawn_4>
+			<Rendering ImagePath="../../assets/white_pawn.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+			<Promotion Promotion="0"/>
+		</White_Pawn_4>
+
+		<White_Pawn_5>
+			<Rendering ImagePath="../../assets/white_pawn.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+			<Promotion Promotion="0"/>
+		</White_Pawn_5>
+
+		<White_Pawn_6>
+			<Rendering ImagePath="../../assets/white_pawn.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+			<Promotion Promotion="0"/>
+		</White_Pawn_6>
+
+		<White_Pawn_7>
+			<Rendering ImagePath="../../assets/white_pawn.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+			<Promotion Promotion="0"/>
+		</White_Pawn_7>
+
+		<White_Pawn_8>
+			<Rendering ImagePath="../../assets/white_pawn.png" Rotation="0.0" Scale="1.0" r="255" g="255" b="255" a="255"/>
+			<Promotion Promotion="0"/>
+		</White_Pawn_8>
+	</Pieces>
+
+</Initialization>

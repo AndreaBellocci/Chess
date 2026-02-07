@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+vs/Chess.sln
+vs/ChessCpp/ChessCpp.vcxproj
+vs/ChessCpp/ChessCpp.vcxproj.filters
+vs/ChessCpp/ProfilingChessCppInfos.lsp
