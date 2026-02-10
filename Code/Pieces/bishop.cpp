@@ -1,11 +1,12 @@
 // Chicago, 7/04/2026
 //	Completed on 8/04/2026
 
-#include "../Chess.h"
+#include "../Types.h"
 #include "../Pieces.h"
-#include "../piece_utilities.h"
+#include "../Chess.h"
+#include "piece_utilities.h"
 
-#include <cmath>
+#include <cstdlib>
 
 void Bishop_BuildPossibleMoves(Pieces bishop_id, int bishop_pos, const Chess& the_game, Pieces my_king_id, PossibleMoves& out_moves, bool allow_checks)
 {
@@ -61,8 +62,8 @@ bool Bishop_CanEatKingInSquare(int bishop_pos, int enemy_king_pos, const board_t
 	const long long king_col = enemy_king_pos % BOARD_SIDE;
 
 	// Bishops can only move diagonally if no obstacle is found
-	const int diff_row = king_row - row;
-	const int diff_col = king_col - col;
+	const long long diff_row = king_row - row;
+	const long long diff_col = king_col - col;
 	if (std::abs(diff_row) != std::abs(diff_col)) // Not in the same diagonal
 		return false;
 

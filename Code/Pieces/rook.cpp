@@ -1,9 +1,10 @@
 // Chicago, 7/04/2026
 //	Completed on 8/04/2026
 
-#include "../Chess.h"
+#include "../Types.h"
 #include "../Pieces.h"
-#include "../piece_utilities.h"
+#include "../Chess.h"
+#include "piece_utilities.h"
 
 void Rook_BuildPossibleMoves(Pieces rook_id, int rook_pos, const Chess& the_game, Pieces my_king_id, PossibleMoves& out_moves, bool allow_checks)
 {

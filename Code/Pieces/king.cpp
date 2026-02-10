@@ -1,10 +1,11 @@
 // Chicago, 7/04/2026
 //	Completed on 8/04/2026
 
-#include "../Chess.h"
+#include "../Types.h"
 #include "../Pieces.h"
-#include "../piece_utilities.h"
+#include "../Chess.h"
 #include "../ErrorCodes.h"
+#include "piece_utilities.h"
 
 #include <cmath>
 
@@ -62,28 +63,28 @@ void King_BuildPossibleMoves(Pieces king_id, int king_pos, const Chess& the_game
 		dest = 6;
 		if (the_game.m_can_black_castle && CanCastle(the_game, king_id, king_pos, dest, Pieces::Black_Rook_King_Side, dest - 1))
 		{
-			DebugHelper(king_id, king_pos, dest, "castle king side", true, true);
+			DebugHelper(king_id, king_pos, dest, "castle king side", true);
 
 			// If everything is good, insert move - NOTE: the app must manually move the rook if players choose to castle
 			out_moves.push_back(dest);
 		} // King side
 		else
 		{
-			DebugHelper(king_id, king_pos, dest, "castle king side", true, false);
+			DebugHelper(king_id, king_pos, dest, "castle king side", false);
 		}
 
 		// Queen side castle: king in c8 (i.e.: index = 2) and rook in d8 (i.e.: index = 3)
 		dest = 2;
 		if (the_game.m_can_black_castle_long && CanCastle(the_game, king_id, king_pos, dest, Pieces::Black_Rook_Queen_Side, dest + 1))
 		{
-			DebugHelper(king_id, king_pos, dest, "castle queen side", true, true);
+			DebugHelper(king_id, king_pos, dest, "castle queen side", true);
 
 			// If everything is good, insert move - NOTE: the app must manually move the rook if players choose to castle
 			out_moves.push_back(dest);
 		} // Queen side
 		else
 		{
-			DebugHelper(king_id, king_pos, dest, "castle queen side", true, false);
+			DebugHelper(king_id, king_pos, dest, "castle queen side", false);
 		}
 
 	} // White castle
@@ -93,28 +94,28 @@ void King_BuildPossibleMoves(Pieces king_id, int king_pos, const Chess& the_game
 		dest = 62;
 		if (the_game.m_can_white_castle && CanCastle(the_game, king_id, king_pos, dest, Pieces::White_Rook_King_Side, dest - 1))
 		{
-			DebugHelper(king_id, king_pos, dest, "castle king side", true, true);
+			DebugHelper(king_id, king_pos, dest, "castle king side", true);
 
 			// If everything is good, insert move - NOTE: the app must manually move the rook if players choose to castle
 			out_moves.push_back(dest);
 		} // King side
 		else
 		{
-			DebugHelper(king_id, king_pos, dest, "castle king side", true, false);
+			DebugHelper(king_id, king_pos, dest, "castle king side", false);
 		}
 
 		// Queen side castle: king in c1 (i.e.: index = 58) and rook in d1 (i.e.: index = 59)
 		dest = 58;
 		if (the_game.m_can_white_castle_long && CanCastle(the_game, king_id, king_pos, dest, Pieces::White_Rook_Queen_Side, dest + 1))
 		{
-			DebugHelper(king_id, king_pos, dest, "castle queen side", true, true);
+			DebugHelper(king_id, king_pos, dest, "castle queen side", true);
 
 			// If everything is good, insert move - NOTE: the app must manually move the rook if players choose to castle
 			out_moves.push_back(dest);
 		} // Queen side
 		else
 		{
-			DebugHelper(king_id, king_pos, dest, "castle queen side", true, false);
+			DebugHelper(king_id, king_pos, dest, "castle queen side", false);
 		}
 	}
 	else

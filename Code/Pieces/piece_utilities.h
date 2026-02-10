@@ -1,6 +1,13 @@
+// Chicago, 8/04/2026
+//	Completed on 8/04/2026
+ 
 #pragma once
-#include "Chess.h"
+#include "../Types.h"
+#include "../Pieces.h"
+#include "../Chess.h"
 
+bool isWhite(Pieces id);
+bool isBlack(Pieces id);
 bool isEnemy(Pieces other_id, Pieces my_piece_id);
 
 bool IsKingUnderCheck(const piece_list& pieces, const board_t& board, Pieces king_id, int king_pos);

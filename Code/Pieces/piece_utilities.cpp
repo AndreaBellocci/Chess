@@ -1,6 +1,23 @@
-#include "Chess.h"
-#include "Pieces.h"
-#include "ErrorCodes.h"
+// Chicago, 8/04/2026
+//	Completed on 8/04/2026
+
+#include "../Types.h"
+#include "../Pieces.h"
+#include "../Chess.h"
+#include "../ErrorCodes.h"
+#include "piece_utilities.h"
+
+bool isWhite(Pieces id)
+{
+	return first_white_piece_id <= id && id <= last_white_piece_id;
+} // isWhite
+
+
+bool isBlack(Pieces id)
+{
+	return first_black_piece_id <= id && id <= last_black_piece_id;
+} // isBlack
+
 
 bool isEnemy(Pieces other_id, Pieces my_piece_id)
 {
@@ -44,7 +61,7 @@ bool IsKingUnderCheck(const piece_list& pieces, const board_t& board, Pieces kin
 		// always 16 to as few as possible, but it's not straightforward to implement due to knights, en passant and castling moves.
 		if (pieces[id]->CanEatKing(king_pos, board))
 		{
-			DebugHelper(static_cast<Pieces>(id), pieces[id]->GetPiecePos(), king_pos, "check", true, true);
+			DebugHelper(static_cast<Pieces>(id), pieces[id]->GetPiecePos(), king_pos, "check", true);
 			return true;
 		}
 	}
@@ -125,13 +142,13 @@ bool MoveHelper(int dest, Pieces piece_id, int src, const Chess& the_game, Piece
 			// However, there may other moves that can be done, so we should keep searching.
 			if (IsKingUnderCheck(pieces, b2, my_king_id, my_king_pos))
 			{
-				DebugHelper(piece_id, src, dest, "move to", true, false);
+				DebugHelper(piece_id, src, dest, "move to", false);
 				return false;
 			}
 		}
 
 		// No piece on dest, we can move there
-		DebugHelper(piece_id, src, dest, "move to", true, true);
+		DebugHelper(piece_id, src, dest, "move to", true);
 		out_moves.push_back(dest);
 		return false; // Keep searching
 	}
@@ -154,19 +171,19 @@ bool MoveHelper(int dest, Pieces piece_id, int src, const Chess& the_game, Piece
 
 				if (IsKingUnderCheck(pieces, b2, my_king_id, my_king_pos))
 				{
-					DebugHelper(piece_id, src, dest, "capture", true, false);
+					DebugHelper(piece_id, src, dest, "capture", false);
 					return false; // Keep searching
 				}
 			}
 
 			// Capture the enemy piece
-			DebugHelper(piece_id, src, dest, "capture", true, true);
+			DebugHelper(piece_id, src, dest, "capture", true);
 			out_moves.push_back(dest);
 			return false; // Keep searching
 		}
 
 		// Stop searching in this direction
-		DebugHelper(piece_id, src, dest, "capture", true, false);
+		DebugHelper(piece_id, src, dest, "capture", false);
 		return true;
 	}
 } // MoveHelper
