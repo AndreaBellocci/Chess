@@ -616,7 +616,6 @@ void HumanView::VOnRender()
 
 	// Draw the board
 	this->DrawBoard();
-	this->m_PawnPromoter.OnRender();
 
 	// Draw the piece textures
 	// Set up pieces components with the loaded textures
@@ -628,6 +627,9 @@ void HumanView::VOnRender()
 			DrawTextureEx(*this->m_textures[i].tex, this->m_textures[i].screen_pos, 0.f, 1.f, WHITE);
 		}
 	}
+
+	// Draw the pawn promoter interface
+	this->m_PawnPromoter.OnRender();
 
 	if (this->m_MatchOver != Event_EndMatch::END_STATUS::Playing)
 	{

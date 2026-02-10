@@ -113,35 +113,28 @@ void Pawn::Promote(Promotions new_piece)
 	// Each pawn can be promoted only once
 	if (this->m_Rank == Promotions::Null)
 	{
-		// Black or white?
-		PieceType type;
-
 		// Simply change implementation
 		switch (new_piece)
 		{
 		case Promotions::Rook:
-			type = (this->m_king_id == Pieces::White_King ? PieceType::White_Rook : PieceType::Black_Rook);
 			this->m_MovePieceImpl  = Rook_BuildPossibleMoves;
 			this->m_CanEatKingImpl = Rook_CanEatKingInSquare;
 			this->m_CanMoveImpl    = Rook_CanMove;
 			break;
 
 		case Promotions::Knight:
-			type = (this->m_king_id == Pieces::White_King ? PieceType::White_Knight : PieceType::Black_Knight);
 			this->m_MovePieceImpl  = Knight_BuildPossibleMoves;
 			this->m_CanEatKingImpl = Knight_CanEatKingInSquare;
 			this->m_CanMoveImpl    = Knight_CanMove;
 			break;
 
 		case Promotions::Bishop:
-			type = (this->m_king_id == Pieces::White_King ? PieceType::White_Bishop : PieceType::Black_Bishop);
 			this->m_MovePieceImpl  = Bishop_BuildPossibleMoves;
 			this->m_CanEatKingImpl = Bishop_CanEatKingInSquare;
 			this->m_CanMoveImpl    = Bishop_CanMove;
 			break;
 
 		case Promotions::Queen:
-			type = (this->m_king_id == Pieces::White_King ? PieceType::White_Queen : PieceType::Black_Queen);
 			this->m_MovePieceImpl  = Queen_BuildPossibleMoves;
 			this->m_CanEatKingImpl = Queen_CanEatKingInSquare;
 			this->m_CanMoveImpl    = Queen_CanMove;
@@ -150,6 +143,9 @@ void Pawn::Promote(Promotions new_piece)
 		default:
 			THROW_CHESS_EXCEPTION(ErrorCode::InvalidPromotion, "The promotion %d is not valid", static_cast<int>(new_piece));
 		}
+
+		// Update the promotion
+		this->m_Rank = new_piece;
 	}
 } // Promote
 
