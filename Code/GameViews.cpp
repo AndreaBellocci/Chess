@@ -5,176 +5,198 @@
 #include "Chess.h"
 #include "ChessEvents.h"
 #include "GameViews.h"
+#include "ChessApp.h"
+#include "ErrorCodes.h"
 using namespace ENGINE_NAMESPACE;
 
-#define PIECE_OFFSET 0
-#define RENDER_COMPONENT_NAME "Render_Component"
-
-int TextureLoader::tex_width = 10;
-int TextureLoader::tex_height = 10;
-
-std::array<std::pair<std::string, Texture2D>, (size_t)PieceType::Num_Types> TextureLoader::textures;
-
-ENGINE_NAMESPACE::EventManager& IGameView::s_GlobalEventManager = GetEventManager();
-
-void TextureLoader::SetTextureStartingSize(int new_width, int new_height)
-{
-	Assert(new_width >= 0 && new_height >= 0 && "Invalid texture size");
-
-	TextureLoader::tex_width = new_width;
-	TextureLoader::tex_height = new_height;
-} // SetTextureStartingSize
-
-const Texture2D* TextureLoader::GetPieceTextureAndName(PieceType typeID, std::string& outFileName)
-{
-	const auto& ret = TextureLoader::textures[(size_t)typeID];
-	outFileName = ret.first;
-	return &ret.second; 
-} // GetPieceTextureAndName
-
-const Texture2D* TextureLoader::LoadPieceTextureFromFile(PieceType typeID, const std::string& fileName)
-{
-	// Create an image from a file in memory
-	Image image = LoadImage(fileName.c_str());
-
-	// Resize image to the desired width and height
-	ImageResize(&image, TextureLoader::tex_width, TextureLoader::tex_height);
-
-	// then create a texture in vram from said image and sore it in the texture array
-	Texture2D texture = LoadTextureFromImage(image);
-
-	// Dealocate the image
-	UnloadImage(image);
-
-	TextureLoader::textures[(size_t)typeID] = std::make_pair(fileName, texture);
-
-	return &TextureLoader::textures[(size_t)typeID].second;
-} // LoadPieceTextureFromFile
-
 
 // ========================================================================================================================================
-// Class PawnPromoter Definition
+// Textures Data
 // ========================================================================================================================================
-void PawnPromoter::PromotePawn(Pawn* const pawn)
+class TextureManager
 {
-	Assert(pawn);
-	this->m_PawnToPromote = pawn;
-
-	this->m_Visible = true;
-} // PromotePawn
-
-void PawnPromoter::OnInput(int hovering_x, int hovering_y, bool selected)
-{
-	if (this->m_Visible && hovering_x != INVALID && hovering_y != INVALID)
+public:
+	~TextureManager()
 	{
-		const auto first_x = this->m_Start_x;
-		const auto first_y = this->m_Start_y;
-		const auto second_x = this->m_Start_x + TextureLoader::tex_width;
-		const auto second_y = this->m_Start_y + TextureLoader::tex_height;
-		const auto end_x = this->m_Start_x + TextureLoader::tex_width * 2;
-		const auto end_y = this->m_Start_y + TextureLoader::tex_height * 2;
+		for (auto& tex : this->textures)
+			UnloadTexture(tex);
+	} // Destructor
 
-		if (selected)
-		{
-			if (first_x <= hovering_x && hovering_x <= second_x) // First row
-			{
-				if (first_y <= hovering_y && hovering_y <= second_y) // First column -> Rook
-					this->m_PawnToPromote->Promote(Pawn::Promotions::Rook);
-				else if (second_y <= hovering_y && hovering_y <= end_y) // Second column -> Knight
-					this->m_PawnToPromote->Promote(Pawn::Promotions::Knight);
-
-				else; // TODO: Reset selection and undo move
-			}
-			else if (second_x <= hovering_x && hovering_x <= end_x) // Second row
-			{
-				if (first_y <= hovering_y && hovering_y <= second_y) // First column -> Bishop
-					this->m_PawnToPromote->Promote(Pawn::Promotions::Bishop);
-				else if (second_y <= hovering_y && hovering_y <= end_y) // Second column -> Queen
-					this->m_PawnToPromote->Promote(Pawn::Promotions::Queen);
-
-				else; // TODO: Reset selection and undo move
-			}
-
-			else; // TODO: Reset selection and undo move
-
-			// We're no more useful
-			this->m_PawnToPromote = nullptr;
-			this->m_Visible = false;
-		}
-		else
-		{
-			this->m_Hovering = INVALID;
-
-			// Simply where highlight hovering
-			if (first_x <= hovering_x && hovering_x <= second_x) // First row
-			{
-				if (first_y <= hovering_y && hovering_y <= second_y) // First column -> Rook
-					this->m_Hovering = 1;
-				else if (second_y <= hovering_y && hovering_y <= end_y) // Second column -> Knight
-					this->m_Hovering = 2;
-			}
-			else if (second_x <= hovering_x && hovering_x <= end_x) // Second row
-			{
-				if (first_y <= hovering_y && hovering_y <= second_y) // First column -> Bishop
-					this->m_Hovering = 3;
-				else if (second_y <= hovering_y && hovering_y <= end_y) // Second column -> Queen
-					this->m_Hovering = 4;
-			}
-		}
-	}
-
-} // OnInput
-
-void PawnPromoter::OnRender()
-{
-	//	| R | K |
-	//	| B | Q |
-
-	if (this->m_Visible)
+	void SetTextureSize(int width, int height)
 	{
-		Assert(this->m_PawnToPromote);
-		this->m_Start_x = GetScreenWidth() / 2 - TextureLoader::tex_width;
-		this->m_Start_y = GetScreenHeight() / 2 - TextureLoader::tex_height;
+		this->tex_width = width;
+		this->tex_height = height;
+	} // SetTextureSize
 
-		Rectangle rect{ (float)this->m_Start_x, (float)this->m_Start_y, TextureLoader::tex_width * 2.f, TextureLoader::tex_height * 2.f };
-		DrawRectangleRounded(rect, .5, 100, SKYBLUE);
+	const std::array<Texture2D, num_piece_types>& GetTextures() const
+	{
+		return this->textures;
+	} // GetTextures
 
-		float rad = std::min(TextureLoader::tex_width, TextureLoader::tex_height) * .5f;
-		int x, y;
-		switch (this->m_Hovering)
-		{
-		case 1: x = this->m_Start_x + TextureLoader::tex_width / 2;		y = this->m_Start_y + TextureLoader::tex_height / 2;		break;
-		case 2:	x = this->m_Start_x + TextureLoader::tex_width / 2;		y = this->m_Start_y + 3 * TextureLoader::tex_height / 2;	break;
-		case 3:	x = this->m_Start_x + 3 * TextureLoader::tex_width / 2;	y = this->m_Start_y + TextureLoader::tex_height / 2;		break;
-		case 4:	x = this->m_Start_x + 3 * TextureLoader::tex_width / 2;	y = this->m_Start_y + 3 * TextureLoader::tex_height / 2;	break;
-		default: goto Next;
-		}
-		DrawCircleLines(x, y, rad, GRAY);
+	const Texture2D* GetPieceTextureAndName(PieceType type) const
+	{
+		return &this->textures[static_cast<size_t>(type)];
+	} // GetPieceTextureAndName
 
-Next:
-		if (Pieces::White_Pawn_1 < this->m_PawnToPromote->GetPieceID())
-		{
-			DrawTexture(TextureLoader::textures[(size_t)PieceType::White_Rook].second, this->m_Start_x, this->m_Start_y, WHITE);
-			DrawTexture(TextureLoader::textures[(size_t)PieceType::White_Knight].second, this->m_Start_x, this->m_Start_y + TextureLoader::tex_width, WHITE);
-			DrawTexture(TextureLoader::textures[(size_t)PieceType::White_Bishop].second, this->m_Start_x + TextureLoader::tex_width, this->m_Start_y, WHITE);
-			DrawTexture(TextureLoader::textures[(size_t)PieceType::White_Queen].second, this->m_Start_x + TextureLoader::tex_width, this->m_Start_y + TextureLoader::tex_width, WHITE);
-		}
-		else
-		{
-			DrawTexture(TextureLoader::textures[(size_t)PieceType::Black_Rook].second, this->m_Start_x, this->m_Start_y, WHITE);
-			DrawTexture(TextureLoader::textures[(size_t)PieceType::Black_Knight].second, this->m_Start_x, this->m_Start_y + TextureLoader::tex_width, WHITE);
-			DrawTexture(TextureLoader::textures[(size_t)PieceType::Black_Bishop].second, this->m_Start_x + TextureLoader::tex_width, this->m_Start_y, WHITE);
-			DrawTexture(TextureLoader::textures[(size_t)PieceType::Black_Queen].second, this->m_Start_x + TextureLoader::tex_width, this->m_Start_y + TextureLoader::tex_width, WHITE);
-		}
-	}
-} // OnRender
+	const Texture2D* LoadPieceTextureFromFile(PieceType type, const std::string& fname)
+	{
+		// Create an image from a file in memory
+		Image image = LoadImage(fname.c_str());
+
+		// Resize image to the desired width and height
+		ImageResize(&image, this->tex_width, this->tex_height);
+
+		// then create a texture in vram from said image and sore it in the texture array
+		Texture2D texture = LoadTextureFromImage(image);
+
+		// Dealocate the image
+		UnloadImage(image);
+
+		this->textures[static_cast<size_t>(type)] = texture;
+		return &this->textures[static_cast<size_t>(type)];
+	} // LoadPieceTextureFromFile
+
+private:
+	// Textures
+	std::array<Texture2D, num_piece_types> textures;
+
+	int tex_width;
+	int tex_height;
+} g_TextureManager;
+
+
+
+
+
+
+
+
+//// ========================================================================================================================================
+//// Class PawnPromoter Definition
+//// ========================================================================================================================================
+//void PawnPromoter::PromotePawn(Pawn* const pawn)
+//{
+//	Assert(pawn);
+//	this->m_PawnToPromote = pawn;
+//
+//	this->m_Visible = true;
+//} // PromotePawn
+//
+//void PawnPromoter::OnInput(int hovering_x, int hovering_y, bool selected)
+//{
+//	if (this->m_Visible && hovering_x != INVALID && hovering_y != INVALID)
+//	{
+//		const auto first_x = this->m_Start_x;
+//		const auto first_y = this->m_Start_y;
+//		const auto second_x = this->m_Start_x + TextureLoader::tex_width;
+//		const auto second_y = this->m_Start_y + TextureLoader::tex_height;
+//		const auto end_x = this->m_Start_x + TextureLoader::tex_width * 2;
+//		const auto end_y = this->m_Start_y + TextureLoader::tex_height * 2;
+//
+//		if (selected)
+//		{
+//			if (first_x <= hovering_x && hovering_x <= second_x) // First row
+//			{
+//				if (first_y <= hovering_y && hovering_y <= second_y) // First column -> Rook
+//					this->m_PawnToPromote->Promote(Pawn::Promotions::Rook);
+//				else if (second_y <= hovering_y && hovering_y <= end_y) // Second column -> Knight
+//					this->m_PawnToPromote->Promote(Pawn::Promotions::Knight);
+//
+//				else; // TODO: Reset selection and undo move
+//			}
+//			else if (second_x <= hovering_x && hovering_x <= end_x) // Second row
+//			{
+//				if (first_y <= hovering_y && hovering_y <= second_y) // First column -> Bishop
+//					this->m_PawnToPromote->Promote(Pawn::Promotions::Bishop);
+//				else if (second_y <= hovering_y && hovering_y <= end_y) // Second column -> Queen
+//					this->m_PawnToPromote->Promote(Pawn::Promotions::Queen);
+//
+//				else; // TODO: Reset selection and undo move
+//			}
+//
+//			else; // TODO: Reset selection and undo move
+//
+//			// We're no more useful
+//			this->m_PawnToPromote = nullptr;
+//			this->m_Visible = false;
+//		}
+//		else
+//		{
+//			this->m_Hovering = INVALID;
+//
+//			// Simply where highlight hovering
+//			if (first_x <= hovering_x && hovering_x <= second_x) // First row
+//			{
+//				if (first_y <= hovering_y && hovering_y <= second_y) // First column -> Rook
+//					this->m_Hovering = 1;
+//				else if (second_y <= hovering_y && hovering_y <= end_y) // Second column -> Knight
+//					this->m_Hovering = 2;
+//			}
+//			else if (second_x <= hovering_x && hovering_x <= end_x) // Second row
+//			{
+//				if (first_y <= hovering_y && hovering_y <= second_y) // First column -> Bishop
+//					this->m_Hovering = 3;
+//				else if (second_y <= hovering_y && hovering_y <= end_y) // Second column -> Queen
+//					this->m_Hovering = 4;
+//			}
+//		}
+//	}
+//
+//} // OnInput
+//
+//void PawnPromoter::OnRender()
+//{
+//	//	| R | K |
+//	//	| B | Q |
+//
+//	if (this->m_Visible)
+//	{
+//		Assert(this->m_PawnToPromote);
+//		this->m_Start_x = GetScreenWidth() / 2 - TextureLoader::tex_width;
+//		this->m_Start_y = GetScreenHeight() / 2 - TextureLoader::tex_height;
+//
+//		Rectangle rect{ (float)this->m_Start_x, (float)this->m_Start_y, TextureLoader::tex_width * 2.f, TextureLoader::tex_height * 2.f };
+//		DrawRectangleRounded(rect, .5, 100, SKYBLUE);
+//
+//		float rad = std::min(TextureLoader::tex_width, TextureLoader::tex_height) * .5f;
+//		int x, y;
+//		switch (this->m_Hovering)
+//		{
+//		case 1: x = this->m_Start_x + TextureLoader::tex_width / 2;		y = this->m_Start_y + TextureLoader::tex_height / 2;		break;
+//		case 2:	x = this->m_Start_x + TextureLoader::tex_width / 2;		y = this->m_Start_y + 3 * TextureLoader::tex_height / 2;	break;
+//		case 3:	x = this->m_Start_x + 3 * TextureLoader::tex_width / 2;	y = this->m_Start_y + TextureLoader::tex_height / 2;		break;
+//		case 4:	x = this->m_Start_x + 3 * TextureLoader::tex_width / 2;	y = this->m_Start_y + 3 * TextureLoader::tex_height / 2;	break;
+//		default: goto Next;
+//		}
+//		DrawCircleLines(x, y, rad, GRAY);
+//
+//Next:
+//		if (Pieces::White_Pawn_1 < this->m_PawnToPromote->GetPieceID())
+//		{
+//			DrawTexture(TextureLoader::textures[(size_t)PieceType::White_Rook].second, this->m_Start_x, this->m_Start_y, WHITE);
+//			DrawTexture(TextureLoader::textures[(size_t)PieceType::White_Knight].second, this->m_Start_x, this->m_Start_y + TextureLoader::tex_width, WHITE);
+//			DrawTexture(TextureLoader::textures[(size_t)PieceType::White_Bishop].second, this->m_Start_x + TextureLoader::tex_width, this->m_Start_y, WHITE);
+//			DrawTexture(TextureLoader::textures[(size_t)PieceType::White_Queen].second, this->m_Start_x + TextureLoader::tex_width, this->m_Start_y + TextureLoader::tex_width, WHITE);
+//		}
+//		else
+//		{
+//			DrawTexture(TextureLoader::textures[(size_t)PieceType::Black_Rook].second, this->m_Start_x, this->m_Start_y, WHITE);
+//			DrawTexture(TextureLoader::textures[(size_t)PieceType::Black_Knight].second, this->m_Start_x, this->m_Start_y + TextureLoader::tex_width, WHITE);
+//			DrawTexture(TextureLoader::textures[(size_t)PieceType::Black_Bishop].second, this->m_Start_x + TextureLoader::tex_width, this->m_Start_y, WHITE);
+//			DrawTexture(TextureLoader::textures[(size_t)PieceType::Black_Queen].second, this->m_Start_x + TextureLoader::tex_width, this->m_Start_y + TextureLoader::tex_width, WHITE);
+//		}
+//	}
+//} // OnRender
+
+
 
 // ========================================================================================================================================
 // Class HumanView Definition
 // ========================================================================================================================================
+#define PIECE_OFFSET 0
 
-HumanView::HumanView(const Board& board, const PossibleMovesIndeces& targets)
-	: IGameView(board), m_Targets(targets),
+HumanView::HumanView(ChessGame& board)
+	: IGameView(board), m_Targets(nullptr),
 	m_Selected_x(INVALID),
 	m_Selected_y(INVALID),
 	m_Hovering_x(INVALID),
@@ -187,33 +209,33 @@ HumanView::HumanView(const Board& board, const PossibleMovesIndeces& targets)
 	m_Offset_Top(0),
 	m_Offset_Bottom(0),
 	m_Square_Side(0),
-	m_Screen_Width(GetScreenWidth()),
-	m_Screen_Height(GetScreenHeight())
+	m_Window_Width(GetScreenWidth()),
+	m_Window_Height(GetScreenHeight())
 {
 	// Center board on window
-	if (this->m_Screen_Width >= this->m_Screen_Height)
+	if (this->m_Window_Width >= this->m_Window_Height)
 	{
-		this->m_Offset_Left = this->m_Offset_Right = (this->m_Screen_Width - this->m_Screen_Height) / 2;
+		this->m_Offset_Left = this->m_Offset_Right = (this->m_Window_Width - this->m_Window_Height) / 2;
 
 		// Board has the same height as window
-		this->m_Offset_Top = this->m_Offset_Bottom = 0;
-		this->m_Square_Side = this->m_Screen_Height / BOARD_SIDE;
+		this->m_Offset_Top  = this->m_Offset_Bottom = 0;
+		this->m_Square_Side = this->m_Window_Height / BOARD_SIDE;
 	}
 	else
 	{
-		this->m_Offset_Top = this->m_Offset_Bottom = (this->m_Screen_Height - this->m_Screen_Width) / 2;
+		this->m_Offset_Top = this->m_Offset_Bottom = (this->m_Window_Height - this->m_Window_Width) / 2;
 
 		// Board has the same width as window
 		this->m_Offset_Left = this->m_Offset_Right = 0;
-		this->m_Square_Side = this->m_Screen_Width / BOARD_SIDE;
+		this->m_Square_Side = this->m_Window_Width / BOARD_SIDE;
 	}
 
 	// Set initial texture size
-	TextureLoader::SetTextureStartingSize(this->m_Square_Side - 2 * PIECE_OFFSET, this->m_Square_Side - 2 * PIECE_OFFSET);
+	g_TextureManager.SetTextureSize(this->m_Square_Side - 2 * PIECE_OFFSET, this->m_Square_Side - 2 * PIECE_OFFSET);
 } // Default Constructor
 
-HumanView::HumanView(const Board& board, const PossibleMovesIndeces& targets, int left, int right, int top, int bottom)
-	: IGameView(board), m_Targets(targets), 
+HumanView::HumanView(ChessGame& board, int left, int right, int top, int bottom)
+	: IGameView(board), m_Targets(nullptr),
 	m_Selected_x(INVALID),
 	m_Selected_y(INVALID),
 	m_Hovering_x(INVALID),
@@ -226,8 +248,8 @@ HumanView::HumanView(const Board& board, const PossibleMovesIndeces& targets, in
 	m_Offset_Top(top),
 	m_Offset_Bottom(bottom),
 	m_Square_Side(0),
-	m_Screen_Width(GetScreenWidth()),
-	m_Screen_Height(GetScreenHeight())
+	m_Window_Width(GetScreenWidth()),
+	m_Window_Height(GetScreenHeight())
 {
 	if (this->m_Offset_Left		< 0)	this->m_Offset_Left		= 0;
 	if (this->m_Offset_Right	< 0)	this->m_Offset_Right	= 0;
@@ -235,38 +257,38 @@ HumanView::HumanView(const Board& board, const PossibleMovesIndeces& targets, in
 	if (this->m_Offset_Bottom	< 0)	this->m_Offset_Bottom	= 0;
 
 	// Horizontal offsets are too large
-	if (this->m_Offset_Left + this->m_Offset_Right >= m_Screen_Width - 4 * BOARD_SIDE)
+	if (this->m_Offset_Left + this->m_Offset_Right >= m_Window_Width - 4 * BOARD_SIDE)
 	{
 		// Center board on window
-		if (this->m_Screen_Width >= this->m_Screen_Height)
-			this->m_Offset_Left = this->m_Offset_Right = (this->m_Screen_Width - this->m_Screen_Height) / 2;
+		if (this->m_Window_Width >= this->m_Window_Height)
+			this->m_Offset_Left = this->m_Offset_Right = (this->m_Window_Width - this->m_Window_Height) / 2;
 		else
 			this->m_Offset_Left = this->m_Offset_Right = 0;  // No horizontal offset if width < height
 	}
 
 	// Vertical offsets are too large
-	if (this->m_Offset_Bottom + this->m_Offset_Top >= m_Screen_Height - 4 * BOARD_SIDE)
+	if (this->m_Offset_Bottom + this->m_Offset_Top >= m_Window_Height - 4 * BOARD_SIDE)
 	{
 		// Center board on window
-		if (this->m_Screen_Height >= this->m_Screen_Width)
-			this->m_Offset_Top = this->m_Offset_Bottom = (this->m_Screen_Height - this->m_Screen_Width) / 2;
+		if (this->m_Window_Height >= this->m_Window_Width)
+			this->m_Offset_Top = this->m_Offset_Bottom = (this->m_Window_Height - this->m_Window_Width) / 2;
 		else
 			this->m_Offset_Top = this->m_Offset_Bottom = 0; // No vertical offset if height < width
 	}
 
-	int width = this->m_Screen_Width - this->m_Offset_Left - this->m_Offset_Right;
-	int height = this->m_Screen_Height - this->m_Offset_Top - this->m_Offset_Bottom;
+	int width = this->m_Window_Width - this->m_Offset_Left - this->m_Offset_Right;
+	int height = this->m_Window_Height - this->m_Offset_Top - this->m_Offset_Bottom;
 	if (height >= width)
 		this->m_Square_Side = width / BOARD_SIDE;
 	else
 		this->m_Square_Side = height / BOARD_SIDE;
 
 	// Set initial texture size
-	TextureLoader::SetTextureStartingSize(this->m_Square_Side - 2 * PIECE_OFFSET, this->m_Square_Side - 2 * PIECE_OFFSET);
+	g_TextureManager.SetTextureSize(this->m_Square_Side - 2 * PIECE_OFFSET, this->m_Square_Side - 2 * PIECE_OFFSET);
 } // Constructor
 
-HumanView::HumanView(const Board& board, const PossibleMovesIndeces& targets, Color background, Color first, Color second)
-	: IGameView(board), m_Targets(targets), 
+HumanView::HumanView(ChessGame& board, Color background, Color first, Color second)
+	: IGameView(board), m_Targets(nullptr),
 	m_Selected_x(INVALID),
 	m_Selected_y(INVALID),
 	m_Hovering_x(INVALID),
@@ -279,33 +301,33 @@ HumanView::HumanView(const Board& board, const PossibleMovesIndeces& targets, Co
 	m_Offset_Top(0),
 	m_Offset_Bottom(0),
 	m_Square_Side(0),
-	m_Screen_Width(GetScreenWidth()),
-	m_Screen_Height(GetScreenHeight())
+	m_Window_Width(GetScreenWidth()),
+	m_Window_Height(GetScreenHeight())
 {
 	// Center board on window
-	if (this->m_Screen_Width >= this->m_Screen_Height)
+	if (this->m_Window_Width >= this->m_Window_Height)
 	{
-		this->m_Offset_Left = this->m_Offset_Right = (this->m_Screen_Width - this->m_Screen_Height) / 2;
+		this->m_Offset_Left = this->m_Offset_Right = (this->m_Window_Width - this->m_Window_Height) / 2;
 
 		// Board has the same height as window
 		this->m_Offset_Top = this->m_Offset_Bottom = 0;
-		this->m_Square_Side = this->m_Screen_Height / BOARD_SIDE;
+		this->m_Square_Side = this->m_Window_Height / BOARD_SIDE;
 	}
 	else
 	{
-		this->m_Offset_Top = this->m_Offset_Bottom = (this->m_Screen_Height - this->m_Screen_Width) / 2;
+		this->m_Offset_Top = this->m_Offset_Bottom = (this->m_Window_Height - this->m_Window_Width) / 2;
 
 		// Board has the same width as window
 		this->m_Offset_Left = this->m_Offset_Right = 0;
-		this->m_Square_Side = this->m_Screen_Width / BOARD_SIDE;
+		this->m_Square_Side = this->m_Window_Width / BOARD_SIDE;
 	}
 
 	// Set initial texture size
-	TextureLoader::SetTextureStartingSize(this->m_Square_Side - 2 * PIECE_OFFSET, this->m_Square_Side - 2 * PIECE_OFFSET);
+	g_TextureManager.SetTextureSize(this->m_Square_Side - 2 * PIECE_OFFSET, this->m_Square_Side - 2 * PIECE_OFFSET);
 } // Constructor
 
-HumanView::HumanView(const Board& board, const PossibleMovesIndeces& targets, Color background, Color first, Color second, int left, int right, int top, int bottom)
-	: IGameView(board), m_Targets(targets), 
+HumanView::HumanView(ChessGame& board, Color background, Color first, Color second, int left, int right, int top, int bottom)
+	: IGameView(board), m_Targets(nullptr),
 	m_Selected_x(INVALID),
 	m_Selected_y(INVALID),
 	m_Hovering_x(INVALID),
@@ -318,8 +340,8 @@ HumanView::HumanView(const Board& board, const PossibleMovesIndeces& targets, Co
 	m_Offset_Top(top),
 	m_Offset_Bottom(bottom),
 	m_Square_Side(0),
-	m_Screen_Width(GetScreenWidth()),
-	m_Screen_Height(GetScreenHeight())
+	m_Window_Width(GetScreenWidth()),
+	m_Window_Height(GetScreenHeight())
 {
 	if (this->m_Offset_Left		< 0)	this->m_Offset_Left		= 0;
 	if (this->m_Offset_Right	< 0)	this->m_Offset_Right	= 0;
@@ -327,166 +349,106 @@ HumanView::HumanView(const Board& board, const PossibleMovesIndeces& targets, Co
 	if (this->m_Offset_Bottom	< 0)	this->m_Offset_Bottom	= 0;
 
 	// Horizontal offsets are too large
-	if (this->m_Offset_Left + this->m_Offset_Right >= m_Screen_Width - 4 * BOARD_SIDE)
+	if (this->m_Offset_Left + this->m_Offset_Right >= m_Window_Width - 4 * BOARD_SIDE)
 	{
 		// Center board on window
-		if (this->m_Screen_Width >= this->m_Screen_Height)
-			this->m_Offset_Left = this->m_Offset_Right = (this->m_Screen_Width - this->m_Screen_Height) / 2;
+		if (this->m_Window_Width >= this->m_Window_Height)
+			this->m_Offset_Left = this->m_Offset_Right = (this->m_Window_Width - this->m_Window_Height) / 2;
 		else
 			this->m_Offset_Left = this->m_Offset_Right = 0;  // No horizontal offset if width < height
 	}
 
 	// Vertical offsets are too large
-	if (this->m_Offset_Bottom + this->m_Offset_Top >= m_Screen_Height - 4 * BOARD_SIDE)
+	if (this->m_Offset_Bottom + this->m_Offset_Top >= m_Window_Height - 4 * BOARD_SIDE)
 	{
 		// Center board on window
-		if (this->m_Screen_Height >= this->m_Screen_Width)
-			this->m_Offset_Top = this->m_Offset_Bottom = (this->m_Screen_Height - this->m_Screen_Width) / 2;
+		if (this->m_Window_Height >= this->m_Window_Width)
+			this->m_Offset_Top = this->m_Offset_Bottom = (this->m_Window_Height - this->m_Window_Width) / 2;
 		else
 			this->m_Offset_Top = this->m_Offset_Bottom = 0; // No vertical offset if height < width
 	}
 
-	int width = this->m_Screen_Width - this->m_Offset_Left - this->m_Offset_Right;
-	int height = this->m_Screen_Height - this->m_Offset_Top - this->m_Offset_Bottom;
+	int width = this->m_Window_Width - this->m_Offset_Left - this->m_Offset_Right;
+	int height = this->m_Window_Height - this->m_Offset_Top - this->m_Offset_Bottom;
 	if (height >= width)
 		this->m_Square_Side = width / BOARD_SIDE;
 	else
 		this->m_Square_Side = height / BOARD_SIDE;
 
 	// Set initial texture size
-	TextureLoader::SetTextureStartingSize(this->m_Square_Side - 2 * PIECE_OFFSET, this->m_Square_Side - 2 * PIECE_OFFSET);
+	g_TextureManager.SetTextureSize(this->m_Square_Side - 2 * PIECE_OFFSET, this->m_Square_Side - 2 * PIECE_OFFSET);
 } // Constructor
 
-void HumanView::VOnInitialize()
+void HumanView::VOnInitialize(const std::string& xml_view_settings)
 {
-	s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnRightClick),		Event_RightButtonDown::GetEventType());
-	s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnLeftClick),			Event_LeftButtonDown::GetEventType());
-	s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnSelectSquare),		Event_SelectSquare::GetEventType());
-	s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnSelectionReset),	Event_SelectionReset::GetEventType());
-	s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnStartMovePiece),	Event_StartMovePiece::GetEventType());
-	s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnCastle),			Event_Castle::GetEventType());
-	s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnPawnPromotion),		Event_PawnPromotion::GetEventType());
-	s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnCheck),				Event_Check::GetEventType());
-	s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnEndMatch),			Event_EndMatch::GetEventType());
+	auto& evtman = this->m_GameState.GetGameEventManager();
+	evtman.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnRightClick),		Event_RightButtonDown::GetEventType());
+	evtman.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnLeftClick),		Event_LeftButtonDown::GetEventType());
+	evtman.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnSelectSquare),	Event_SelectSquare::GetEventType());
+	evtman.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnSelectionReset),	Event_SelectionReset::GetEventType());
+	evtman.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnStartMovePiece),	Event_StartMovePiece::GetEventType());
+	evtman.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnCastle),			Event_Castle::GetEventType());
+	evtman.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnPawnPromotion),	Event_PawnPromotion::GetEventType());
+	evtman.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnCheck),			Event_Check::GetEventType());
+	evtman.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnEndMatch),		Event_EndMatch::GetEventType());
 
+	// Load all piece textures. TODO: grab file names from xml_view_settings
+	g_TextureManager.LoadPieceTextureFromFile(PieceType::White_Pawn,	"../../assets/white_pawn.png");
+	g_TextureManager.LoadPieceTextureFromFile(PieceType::White_Rook,	"../../assets/white_rook.png");
+	g_TextureManager.LoadPieceTextureFromFile(PieceType::White_Knight,	"../../assets/white_knight.png");
+	g_TextureManager.LoadPieceTextureFromFile(PieceType::White_Bishop,	"../../assets/white_bishop.png");
+	g_TextureManager.LoadPieceTextureFromFile(PieceType::White_Queen,	"../../assets/white_queen.png");
+	g_TextureManager.LoadPieceTextureFromFile(PieceType::White_King,	"../../assets/white_king.png");
+	g_TextureManager.LoadPieceTextureFromFile(PieceType::Black_Pawn,	"../../assets/black_pawn.png");
+	g_TextureManager.LoadPieceTextureFromFile(PieceType::Black_Rook,	"../../assets/black_rook.png");
+	g_TextureManager.LoadPieceTextureFromFile(PieceType::Black_Knight,	"../../assets/black_knight.png");
+	g_TextureManager.LoadPieceTextureFromFile(PieceType::Black_Bishop,	"../../assets/black_bishop.png");
+	g_TextureManager.LoadPieceTextureFromFile(PieceType::Black_Queen,	"../../assets/black_queen.png");
+	g_TextureManager.LoadPieceTextureFromFile(PieceType::Black_King,	"../../assets/black_king.png");
 
-	// All pieces' images must be set on the correct starting position based on where they are on the board
-	int col_coord = this->m_Offset_Left;
-	int row_coord = this->m_Offset_Top;
-	Piece* curr = nullptr;
-	for (size_t i = 0; i < BOARD_SIDE; ++i) // Find all pieces
+	// Set up pieces components with the loaded textures
+	for (size_t i = 0; i < this->m_textures.size(); ++i)
 	{
-		for (size_t j = 0; j < BOARD_SIDE; ++j) // Find all pieces
+		const auto& piece = this->m_GameState.GetPieces()[i];
+		const auto piece_pos = piece->GetPiecePos();
+		const int x = piece_pos % BOARD_SIDE;
+		const int y = piece_pos / BOARD_SIDE;
+
+		// Set starting position of the piece texture to the top-left corner of the square
+		const int screen_x = x * this->m_Square_Side + this->m_Offset_Left + PIECE_OFFSET;
+		const int screen_y = y * this->m_Square_Side + this->m_Offset_Top + PIECE_OFFSET;
+		this->m_textures[i].screen_pos = Vector2{ (float)screen_x, (float)screen_y };
+
+		// Find which texture to assign to the piece
+		switch (piece->GetPieceID())
 		{
-			curr = this->m_Board.m_Board[i * BOARD_SIDE + j];
+			// White pieces
+		case Pieces::White_Rook_King_Side:	case Pieces::White_Rook_Queen_Side: this->m_textures[i].tex = g_TextureManager.GetPieceTextureAndName(PieceType::White_Rook);   break;
+		case Pieces::White_Knight_1:		case Pieces::White_Knight_2:		this->m_textures[i].tex = g_TextureManager.GetPieceTextureAndName(PieceType::White_Knight); break;
+		case Pieces::White_Bishop_1:		case Pieces::White_Bishop_2:		this->m_textures[i].tex = g_TextureManager.GetPieceTextureAndName(PieceType::White_Bishop); break;
+		case Pieces::White_Queen:												this->m_textures[i].tex = g_TextureManager.GetPieceTextureAndName(PieceType::White_Queen);  break;
+		case Pieces::White_King:												this->m_textures[i].tex = g_TextureManager.GetPieceTextureAndName(PieceType::White_King);   break;
+		case Pieces::White_Pawn_1: case Pieces::White_Pawn_2: case Pieces::White_Pawn_3: case Pieces::White_Pawn_4:
+		case Pieces::White_Pawn_5: case Pieces::White_Pawn_6: case Pieces::White_Pawn_7: case Pieces::White_Pawn_8:
+			this->m_textures[i].tex = g_TextureManager.GetPieceTextureAndName(PieceType::White_Pawn); break;
+			
+			// Black pieces
+		case Pieces::Black_Rook_King_Side:	case Pieces::Black_Rook_Queen_Side: this->m_textures[i].tex = g_TextureManager.GetPieceTextureAndName(PieceType::Black_Rook);   break;
+		case Pieces::Black_Knight_1:		case Pieces::Black_Knight_2:		this->m_textures[i].tex = g_TextureManager.GetPieceTextureAndName(PieceType::Black_Knight); break;
+		case Pieces::Black_Bishop_1:		case Pieces::Black_Bishop_2:		this->m_textures[i].tex = g_TextureManager.GetPieceTextureAndName(PieceType::Black_Bishop); break;
+		case Pieces::Black_Queen:												this->m_textures[i].tex = g_TextureManager.GetPieceTextureAndName(PieceType::Black_Queen);  break;
+		case Pieces::Black_King:												this->m_textures[i].tex = g_TextureManager.GetPieceTextureAndName(PieceType::Black_King);   break;
+		case Pieces::Black_Pawn_1: case Pieces::Black_Pawn_2: case Pieces::Black_Pawn_3: case Pieces::Black_Pawn_4:
+		case Pieces::Black_Pawn_5: case Pieces::Black_Pawn_6: case Pieces::Black_Pawn_7: case Pieces::Black_Pawn_8:
+			this->m_textures[i].tex = g_TextureManager.GetPieceTextureAndName(PieceType::Black_Pawn); break;
 
-			// Set coordinates
-			if (curr)
-			{
-				auto comp = dynamic_cast<Piece2DRenderComponent*>(curr->GetComponent(RENDER_COMPONENT_NAME));
-				Assert(comp);
-
-				// Coordinates and row/col indeces are kinda reversed
-				comp->SetCoordinates(col_coord + PIECE_OFFSET, row_coord + PIECE_OFFSET - 3);
-			}
-
-			// Advance col coordinates
-			col_coord += this->m_Square_Side;
+		default:
+			THROW_CHESS_EXCEPTION(ErrorCode::InvalidID, "Invalid piece ID: %s", this->m_GameState.GetPieces()[i]->GetPieceID());
 		}
-
-		// Advance row coordinates
-		row_coord += this->m_Square_Side;
-		col_coord = this->m_Offset_Left;
-	} // outer for
+	}
 } // VOnInitialize
 
 void HumanView::VOnInput()
-{
-	this->TranslateAndDispachInput();
-} // VOnInput
-
-void HumanView::VOnResize()
-{
-	int width = GetScreenWidth();
-	int height = GetScreenHeight();
-
-	// Resize only if needed
-	if (width != this->m_Screen_Width || height != this->m_Screen_Height)
-	{
-		if (width <= 0 || height <= 0)
-		{
-			this->m_Screen_Width = 0;
-			this->m_Screen_Height = 0;
-			this->m_Square_Side = 0;
-		}
-		else
-		{
-			// old_offset : old_size = new_offset : new_size => new_offset = old_offset * new_size / old_size
-			if (this->m_Screen_Width > 0)
-			{
-				this->m_Offset_Left = this->m_Offset_Left * width / this->m_Screen_Width;
-				this->m_Offset_Right = this->m_Offset_Right * width / this->m_Screen_Width;
-			}
-
-			if (this->m_Screen_Height > 0)
-			{
-				this->m_Offset_Top = this->m_Offset_Top * height / this->m_Screen_Height;
-				this->m_Offset_Bottom = this->m_Offset_Bottom * height / this->m_Screen_Height;
-			}
-
-			// Recalculate square size based on the current window's size
-			if (width >= height)
-				this->m_Square_Side = (height - this->m_Offset_Top - this->m_Offset_Bottom) / BOARD_SIDE;
-			else
-				this->m_Square_Side = (width - this->m_Offset_Left - this->m_Offset_Right) / BOARD_SIDE;
-
-			this->m_Screen_Width = width;
-			this->m_Screen_Height = height;
-		}
-	}
-} // On Resize
-
-
-void HumanView::VOnRender()
-{
-	BeginDrawing();
-	ClearBackground(this->m_BackGround);
-
-	this->DrawBoard();
-	this->m_PawnPromoter.OnRender();
-
-	if (this->m_MatchOver != Event_EndMatch::END_STATUS::Playing)
-	{
-		if (this->m_MatchOver == Event_EndMatch::END_STATUS::White)
-		{
-			Vector2 vec = MeasureTextEx(GetFontDefault(), "WHITE WON!", 50.f, 1.f);
-			DrawText("WHITE WON!", (this->m_Screen_Width - this->m_Offset_Left - (int)vec.x) / 2,
-				(this->m_Screen_Height - this->m_Offset_Top - (int)vec.y) / 2 - this->m_Offset_Top, 50, Color{ 255, 0, 0, 255 });
-		}
-		else if (this->m_MatchOver == Event_EndMatch::END_STATUS::Black)
-		{
-			Vector2 vec = MeasureTextEx(GetFontDefault(), "BLACK WON!", 50.f, 1.f);
-			DrawText("BLACK WON!", (this->m_Screen_Width - this->m_Offset_Left - (int)vec.x) / 2,
-				(this->m_Screen_Height - this->m_Offset_Top - (int)vec.y) / 2 - this->m_Offset_Top, 50, Color{ 255, 0, 0, 255 });
-		}
-		else // Stalemate
-		{
-			Vector2 vec = MeasureTextEx(GetFontDefault(), "STALEMATE!", 50.f, 1.f);
-			DrawText("STALEMATE!", (this->m_Screen_Width - this->m_Offset_Left - (int)vec.x) / 2,
-				(this->m_Screen_Height - this->m_Offset_Top - (int)vec.y) / 2, 50, Color{ 255, 0, 0, 255 });
-		}
-	}
-
-	EndDrawing();
-} // VOnRender
-
-void HumanView::VOnUpdate(ENGINE_NAMESPACE::nanoseconds delta)
-{
-	this->m_ProcessManager.UpdateProcesses(delta);
-} // VOnUpdate
-
-
-void HumanView::TranslateAndDispachInput()
 {
 	// Mouse
 	const int x = GetMouseX();
@@ -500,17 +462,17 @@ void HumanView::TranslateAndDispachInput()
 	}*/
 
 	// If app is waiting for user to choose a promotion, send all input to the promoter
-	if (this->m_PawnPromoter.m_Visible)
-	{
-		// Send all input
-		this->m_PawnPromoter.OnInput(x, y, IsMouseButtonPressed(MOUSE_BUTTON_LEFT));
-		return;
-	}
+	//if (this->m_PawnPromoter.m_Visible)
+	//{
+	//	// Send all input
+	//	this->m_PawnPromoter.OnInput(x, y, IsMouseButtonPressed(MOUSE_BUTTON_LEFT));
+	//	return;
+	//}
 
 	// Process mouse input only if cursor is m_Hovering on the board
-	if (this->m_Screen_Width > 0 && this->m_Screen_Height > 0 && this->m_Square_Side > 0 &&
-		(this->m_Offset_Left < x && x < this->m_Screen_Width - this->m_Offset_Right) &&
-		(this->m_Offset_Top < y && y < this->m_Screen_Height - this->m_Offset_Bottom))
+	if (this->m_Window_Width > 0 && this->m_Window_Height > 0 && this->m_Square_Side > 0 &&
+		(this->m_Offset_Left < x && x < this->m_Window_Width - this->m_Offset_Right) &&
+		(this->m_Offset_Top < y && y < this->m_Window_Height - this->m_Offset_Bottom))
 	{
 		// Find out which square is cursor hovering on
 		this->m_Hovering_x = ((x - this->m_Offset_Left) / this->m_Square_Side);
@@ -523,10 +485,10 @@ void HumanView::TranslateAndDispachInput()
 	}
 
 	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-		s_GlobalEventManager.TriggerEvent(IEventPtr(ENGINE_NEW Event_LeftButtonDown(this->m_Hovering_x, this->m_Hovering_y)));
+		this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_LeftButtonDown(this->m_Hovering_x, this->m_Hovering_y)));
 
 	if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
-		s_GlobalEventManager.TriggerEvent(IEventPtr(ENGINE_NEW Event_RightButtonDown(this->m_Hovering_x, this->m_Hovering_y)));
+		this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_RightButtonDown(this->m_Hovering_x, this->m_Hovering_y)));
 
 	// Keyboard - the only keys relevant are arrows end enters; TODO: alt enters and menu accelerators
 	if (IsKeyPressed(KEY_DOWN))
@@ -572,18 +534,109 @@ void HumanView::TranslateAndDispachInput()
 			ToggleFullscreen();
 			this->VOnResize();
 		}
-		else if (this->m_Hovering_x!= INVALID && this->m_Hovering_y!= INVALID) // Select hovering
+		else if (this->m_Hovering_x != INVALID && this->m_Hovering_y != INVALID) // Select hovering
 		{
-			s_GlobalEventManager.TriggerEvent(IEventPtr(ENGINE_NEW Event_SelectSquare(this->m_Hovering_x, this->m_Hovering_y)));
+			this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_SelectSquare(this->m_Hovering_x, this->m_Hovering_y)));
 		}
-	}	
+	}
 
 	/*if (IsKeyPressed(KEY_KP_ENTER))
 	{
 		this->m_Console.SetActive(true);
 	}*/
-} // TranslateAndDispachInput
+} // VOnInput
 
+void HumanView::VOnResize()
+{
+	int width  = GetScreenWidth();
+	int height = GetScreenHeight();
+
+	// Resize only if needed
+	if (width != this->m_Window_Width || height != this->m_Window_Height)
+	{
+		if (width <= 0 || height <= 0)
+		{
+			this->m_Window_Width = 0;
+			this->m_Window_Height = 0;
+			this->m_Square_Side = 0;
+		}
+		else
+		{
+			// old_offset : old_size = new_offset : new_size => new_offset = old_offset * new_size / old_size
+			if (this->m_Window_Width > 0)
+			{
+				this->m_Offset_Left = this->m_Offset_Left * width / this->m_Window_Width;
+				this->m_Offset_Right = this->m_Offset_Right * width / this->m_Window_Width;
+			}
+
+			if (this->m_Window_Height > 0)
+			{
+				this->m_Offset_Top = this->m_Offset_Top * height / this->m_Window_Height;
+				this->m_Offset_Bottom = this->m_Offset_Bottom * height / this->m_Window_Height;
+			}
+
+			// Recalculate square size based on the current window's size
+			if (width >= height)
+				this->m_Square_Side = (height - this->m_Offset_Top - this->m_Offset_Bottom) / BOARD_SIDE;
+			else
+				this->m_Square_Side = (width - this->m_Offset_Left - this->m_Offset_Right) / BOARD_SIDE;
+
+			this->m_Window_Width = width;
+			this->m_Window_Height = height;
+		}
+	}
+} // On Resize
+
+
+void HumanView::VOnRender()
+{
+	BeginDrawing();
+	ClearBackground(this->m_BackGround);
+
+	// Draw the board
+	this->DrawBoard();
+	//this->m_PawnPromoter.OnRender();
+
+	// Draw the piece textures
+	// Set up pieces components with the loaded textures
+	for (size_t i = 0; i < this->m_textures.size(); ++i)
+	{
+		const auto& piece = this->m_GameState.GetPieces()[i];
+		if (piece->IsAlive())
+		{
+			DrawTextureEx(*this->m_textures[i].tex, this->m_textures[i].screen_pos, 0.f, 1.f, WHITE);
+		}
+	}
+
+	if (this->m_MatchOver != Event_EndMatch::END_STATUS::Playing)
+	{
+		if (this->m_MatchOver == Event_EndMatch::END_STATUS::White)
+		{
+			Vector2 vec = MeasureTextEx(GetFontDefault(), "WHITE WON!", 50.f, 1.f);
+			DrawText("WHITE WON!", (this->m_Window_Width - this->m_Offset_Left - (int)vec.x) / 2,
+				(this->m_Window_Height - this->m_Offset_Top - (int)vec.y) / 2 - this->m_Offset_Top, 50, Color{ 255, 0, 0, 255 });
+		}
+		else if (this->m_MatchOver == Event_EndMatch::END_STATUS::Black)
+		{
+			Vector2 vec = MeasureTextEx(GetFontDefault(), "BLACK WON!", 50.f, 1.f);
+			DrawText("BLACK WON!", (this->m_Window_Width - this->m_Offset_Left - (int)vec.x) / 2,
+				(this->m_Window_Height - this->m_Offset_Top - (int)vec.y) / 2 - this->m_Offset_Top, 50, Color{ 255, 0, 0, 255 });
+		}
+		else // Stalemate
+		{
+			Vector2 vec = MeasureTextEx(GetFontDefault(), "STALEMATE!", 50.f, 1.f);
+			DrawText("STALEMATE!", (this->m_Window_Width - this->m_Offset_Left - (int)vec.x) / 2,
+				(this->m_Window_Height - this->m_Offset_Top - (int)vec.y) / 2, 50, Color{ 255, 0, 0, 255 });
+		}
+	}
+
+	EndDrawing();
+} // VOnRender
+
+void HumanView::VOnUpdate(std::chrono::nanoseconds delta)
+{
+	this->m_ProcessManager.UpdateProcesses(delta.count());
+} // VOnUpdate
 
 
 
@@ -627,33 +680,36 @@ void HumanView::DrawBoard() const
 		DrawRectangleLinesEx(rect, 5.0f, RED);
 	}
 
-	// Draw pieces
-	auto& set = Piece::GetSet();
-	for (int i = 0; i < set.size(); ++i)
-	{
-		if (set[i]->IsAlive())
-		{
-			auto comp = dynamic_cast<Piece2DRenderComponent*>(set[i]->GetComponent(RENDER_COMPONENT_NAME));
-			Assert(comp);
+	//// Draw pieces
+	//auto& set = Piece::GetSet();
+	//for (int i = 0; i < set.size(); ++i)
+	//{
+	//	if (set[i]->IsAlive())
+	//	{
+	//		auto comp = dynamic_cast<Piece2DRenderComponent*>(set[i]->GetComponent(RENDER_COMPONENT_NAME));
+	//		Assert(comp);
 
-			// Coordinates and row/col indeces are kinda reversed
-			comp->VOnDraw();
-		}
-	}
+	//		// Coordinates and row/col indeces are kinda reversed
+	//		comp->VOnDraw();
+	//	}
+	//}
 
 	// Draw possible targets
-	size_t moves = this->m_Targets.size();
-	for (size_t i = 0; i < moves; ++i)
+	if (this->m_Targets)
 	{
-		int xCoord = this->m_Targets[i] % BOARD_SIDE;
-		int yCoord = this->m_Targets[i] / BOARD_SIDE;
-		Rectangle rect = {
-			float(this->m_Offset_Left + xCoord * this->m_Square_Side),
-			float(this->m_Offset_Top + yCoord * this->m_Square_Side),
-			float(this->m_Square_Side),
-			float(this->m_Square_Side) };
+		size_t moves = this->m_Targets->size();
+		for (size_t i = 0; i < moves; ++i)
+		{
+			int xCoord = (*this->m_Targets)[i] % BOARD_SIDE;
+			int yCoord = (*this->m_Targets)[i] / BOARD_SIDE;
+			Rectangle rect = {
+				float(this->m_Offset_Left + xCoord * this->m_Square_Side),
+				float(this->m_Offset_Top + yCoord * this->m_Square_Side),
+				float(this->m_Square_Side),
+				float(this->m_Square_Side) };
 
-		DrawRectangleLinesEx(rect, 7.5f, GREEN);
+			DrawRectangleLinesEx(rect, 7.5f, GREEN);
+		}
 	}
 
 #if 0
@@ -693,19 +749,19 @@ void HumanView::OnLeftClick(const ENGINE_NAMESPACE::IEventPtr& pEvent)
 	// Reset selection only if left-clicking on the same square */
 	if (event.m_x == INVALID || event.m_y == INVALID || (this->m_Selected_x == event.m_x && this->m_Selected_y == event.m_y))
 	{
-		s_GlobalEventManager.TriggerEvent(IEventPtr(ENGINE_NEW Event_SelectionReset));
+		this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_SelectionReset));
 	}
 	else
 	{
 		// Select new square
-		s_GlobalEventManager.TriggerEvent(IEventPtr(ENGINE_NEW Event_SelectSquare(event.m_x, event.m_y)));
+		this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_SelectSquare(event.m_x, event.m_y)));
 	}
 } // OnLeftClick Listener
 
 void HumanView::OnRightClick(const ENGINE_NAMESPACE::IEventPtr& pEvent)
 {
 	// Reset selection no matter where cursor is
-	s_GlobalEventManager.TriggerEvent(IEventPtr(ENGINE_NEW Event_SelectionReset));
+	this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_SelectionReset));
 } // OnRightClick Listener
 
 void HumanView::OnSelectSquare(const ENGINE_NAMESPACE::IEventPtr& pEvent)
@@ -715,46 +771,46 @@ void HumanView::OnSelectSquare(const ENGINE_NAMESPACE::IEventPtr& pEvent)
 
 	int index = event.m_y * BOARD_SIDE + event.m_x; // Coordinates and indeces are kinda reversed
 
-	// If a piece was already selected
-	size_t size = this->m_Targets.size();
-	if (size != 0)
-	{
-		// If new selection corresponds to a possible move
-		for (int i = 0; i < size; ++i)
-		{
-			if (this->m_Targets[i] == index)
-			{
-				// Fire an event to move the piece that was selected
-				int old_sel_index = this->m_Selected_y * BOARD_SIDE + this->m_Selected_x;
-				Piece* selected = this->m_Board.m_Board[old_sel_index];
-				s_GlobalEventManager.TriggerEvent(IEventPtr(ENGINE_NEW Event_StartMovePiece(selected, old_sel_index, index)));
-				return;
-			}
-		}
+	//// If a piece was already selected
+	//size_t size = this->m_Targets.size();
+	//if (size != 0)
+	//{
+	//	// If new selection corresponds to a possible move
+	//	for (int i = 0; i < size; ++i)
+	//	{
+	//		if (this->m_Targets[i] == index)
+	//		{
+	//			// Fire an event to move the piece that was selected
+	//			int old_sel_index = this->m_Selected_y * BOARD_SIDE + this->m_Selected_x;
+	//			Piece* selected = this->m_Board.GetGameState().m_Board[old_sel_index];
+	//			this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_StartMovePiece(selected, old_sel_index, index)));
+	//			return;
+	//		}
+	//	}
 
-		// If execution gets here then the selection wasn't a valid move
-		if (this->m_Board.m_Board[index] != nullptr) // User selected another piece
-		{
-			// Fire an event to select new piece
-			this->m_Selected_x = event.m_x;
-			this->m_Selected_y = event.m_y;
-			s_GlobalEventManager.TriggerEvent(IEventPtr(ENGINE_NEW Event_PieceSelected(index)));
-		}
-		else // Illegal move
-			s_GlobalEventManager.TriggerEvent(IEventPtr(ENGINE_NEW Event_IllegalMove(index)));
-	}
-	else if (this->m_Board.m_Board[index] != nullptr) // User selected another piece
-	{
-		// Fire an event to select new piece
-		this->m_Selected_x = event.m_x;
-		this->m_Selected_y = event.m_y;
-		s_GlobalEventManager.TriggerEvent(IEventPtr(ENGINE_NEW Event_PieceSelected(index)));
-	}
-	else
-	{
-		// User selected a white space - reset selection (shouldn't be necessary)
-		s_GlobalEventManager.TriggerEvent(IEventPtr(ENGINE_NEW Event_SelectionReset));
-	}
+	//	// If execution gets here then the selection wasn't a valid move
+	//	if (this->m_Board.GetGameState().m_Board[index] != nullptr) // User selected another piece
+	//	{
+	//		// Fire an event to select new piece
+	//		this->m_Selected_x = event.m_x;
+	//		this->m_Selected_y = event.m_y;
+	//		this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_PieceSelected(index)));
+	//	}
+	//	else // Illegal move
+	//		this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_IllegalMove(index)));
+	//}
+	//else if (this->m_Board.GetGameState().m_Board[index] != nullptr) // User selected another piece
+	//{
+	//	// Fire an event to select new piece
+	//	this->m_Selected_x = event.m_x;
+	//	this->m_Selected_y = event.m_y;
+	//	this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_PieceSelected(index)));
+	//}
+	//else
+	//{
+	//	// User selected a white space - reset selection (shouldn't be necessary)
+	//	this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_SelectionReset));
+	//}
 } // OnSelectSquare Listener
 
 void HumanView::OnSelectionReset(const ENGINE_NAMESPACE::IEventPtr& pEvent)
@@ -766,33 +822,33 @@ void HumanView::OnSelectionReset(const ENGINE_NAMESPACE::IEventPtr& pEvent)
 
 void HumanView::OnStartMovePiece(const ENGINE_NAMESPACE::IEventPtr& pEvent)
 {
-	// Get event
-	const Event_StartMovePiece& event = *static_cast<Event_StartMovePiece*>(pEvent.get());
+	//// Get event
+	//const Event_StartMovePiece& event = *static_cast<Event_StartMovePiece*>(pEvent.get());
 
-	int stop_row = this->m_Offset_Top + (event.m_Dest / BOARD_SIDE) * this->m_Square_Side + PIECE_OFFSET;
-	int stop_col = this->m_Offset_Left + (event.m_Dest % BOARD_SIDE) * this->m_Square_Side + PIECE_OFFSET;
+	//int stop_row = this->m_Offset_Top + (event.m_Dest / BOARD_SIDE) * this->m_Square_Side + PIECE_OFFSET;
+	//int stop_col = this->m_Offset_Left + (event.m_Dest % BOARD_SIDE) * this->m_Square_Side + PIECE_OFFSET;
 
-	auto comp = static_cast<Piece2DRenderComponent*>(event.m_Piece->GetComponent(RENDER_COMPONENT_NAME));
-	Assert(comp);
+	//auto comp = static_cast<Piece2DRenderComponent*>(event.m_Piece->GetComponent(RENDER_COMPONENT_NAME));
+	//Assert(comp);
 
-	this->m_ProcessManager.AddProcess(ProcessPtr(
-		ENGINE_NEW MovePieceProcess(*comp, MilliToNano(250), stop_row, stop_col)));
+	//this->m_ProcessManager.AddProcess(ProcessPtr(
+	//	ENGINE_NEW MovePieceProcess(*comp, MilliToNano(250), stop_row, stop_col)));
 } // OnStartMovePiece Listener
 
 void HumanView::OnCastle(const ENGINE_NAMESPACE::IEventPtr& pEvent)
 {
-	// Get event
-	const Event_Castle& event = *static_cast<Event_Castle*>(pEvent.get());
+	//// Get event
+	//const Event_Castle& event = *static_cast<Event_Castle*>(pEvent.get());
 
-	int stop_row = this->m_Offset_Top + (event.m_Dest / BOARD_SIDE) * this->m_Square_Side + PIECE_OFFSET;
-	int stop_col = this->m_Offset_Left + (event.m_Dest % BOARD_SIDE) * this->m_Square_Side + PIECE_OFFSET;
+	//int stop_row = this->m_Offset_Top + (event.m_Dest / BOARD_SIDE) * this->m_Square_Side + PIECE_OFFSET;
+	//int stop_col = this->m_Offset_Left + (event.m_Dest % BOARD_SIDE) * this->m_Square_Side + PIECE_OFFSET;
 
-	auto comp = static_cast<Piece2DRenderComponent*>(event.m_Piece->GetComponent(RENDER_COMPONENT_NAME));
-	Assert(comp);
+	//auto comp = static_cast<Piece2DRenderComponent*>(event.m_Piece->GetComponent(RENDER_COMPONENT_NAME));
+	//Assert(comp);
 
-	auto delay = ENGINE_NEW DelayProcess(MilliToNano(100));
-	delay->AttachChildProcess(ProcessPtr(ENGINE_NEW MovePieceProcess(*comp, MilliToNano(250), stop_row, stop_col)));
-	this->m_ProcessManager.AddProcess(ProcessPtr(delay));
+	//auto delay = ENGINE_NEW DelayProcess(MilliToNano(100));
+	//delay->AttachChildProcess(ProcessPtr(ENGINE_NEW MovePieceProcess(*comp, MilliToNano(250), stop_row, stop_col)));
+	//this->m_ProcessManager.AddProcess(ProcessPtr(delay));
 } // OnCastle Listener
 
 
@@ -800,7 +856,7 @@ void HumanView::OnPawnPromotion(const ENGINE_NAMESPACE::IEventPtr& pEvent)
 {
 	// Get event
 	const Event_PawnPromotion& event = *static_cast<Event_PawnPromotion*>(pEvent.get());
-	this->m_PawnPromoter.PromotePawn(event.m_Pawn);
+	//this->m_PawnPromoter.PromotePawn(event.m_Pawn);
 } // OnPawnPromotion Listener
 
 
@@ -829,60 +885,60 @@ void HumanView::OnEndMatch(const ENGINE_NAMESPACE::IEventPtr& pEvent)
 // ========================================================================================================================================
 // Animate pieces movements Process
 // ========================================================================================================================================
-MovePieceProcess::MovePieceProcess(Piece2DRenderComponent& image, nanoseconds executionTime, int stop_row_coord, int stop_col_coord)
-	: m_TotalTimeAvailable(executionTime), m_Stop_Row(stop_row_coord), m_Stop_Col(stop_col_coord), m_Image(image)
-{
-	this->m_TimePassedSoFar = 0;
-} // Constructor
-
-
-void MovePieceProcess::VOnUpdate(ENGINE_NAMESPACE::nanoseconds delta)
-{
-	int x, y;
-	this->m_Image.GetCoordinates(x, y);
-
-	if (y == this->m_Stop_Row && x == this->m_Stop_Col)
-		this->Succeed();
-	else
-	{
-		this->m_TimePassedSoFar += delta;
-
-		// Since nanosec resolution is way to precise for this task, just consider hundredths of seconds
-		const int availTime = (int)(NanoToMilli(this->m_TotalTimeAvailable - this->m_TimePassedSoFar) / 10);
-
-		if (availTime <= 0) // Time expired
-		{
-			this->m_Image.SetCoordinates(this->m_Stop_Col, this->m_Stop_Row);
-		}
-		else // Still got some time
-		{
-			
-			int next_r_step = 0, next_c_step = 0;
-			if (this->m_Stop_Row > y)
-			{
-				next_r_step = (this->m_Stop_Row - y) / availTime;
-				y += next_r_step;
-			}
-			else
-			{
-				next_r_step = (y - this->m_Stop_Row) / availTime;
-				y -= next_r_step;
-			}
-
-			if (this->m_Stop_Col > x)
-			{
-				next_c_step = (this->m_Stop_Col - x) / availTime;
-				x += next_c_step;
-			}
-			else
-			{
-				next_c_step = (x - this->m_Stop_Col) / availTime;
-				x -= next_c_step;
-			}
-			this->m_Image.SetCoordinates(x, y);
-		}
-	}
-} // VOnUpdate
+//MovePieceProcess::MovePieceProcess(Piece2DRenderComponent& image, nanoseconds executionTime, int stop_row_coord, int stop_col_coord)
+//	: m_TotalTimeAvailable(executionTime), m_Stop_Row(stop_row_coord), m_Stop_Col(stop_col_coord), m_Image(image)
+//{
+//	this->m_TimePassedSoFar = 0;
+//} // Constructor
+//
+//
+//void MovePieceProcess::VOnUpdate(ENGINE_NAMESPACE::nanoseconds delta)
+//{
+//	int x, y;
+//	this->m_Image.GetCoordinates(x, y);
+//
+//	if (y == this->m_Stop_Row && x == this->m_Stop_Col)
+//		this->Succeed();
+//	else
+//	{
+//		this->m_TimePassedSoFar += delta;
+//
+//		// Since nanosec resolution is way to precise for this task, just consider hundredths of seconds
+//		const int availTime = (int)(NanoToMilli(this->m_TotalTimeAvailable - this->m_TimePassedSoFar) / 10);
+//
+//		if (availTime <= 0) // Time expired
+//		{
+//			this->m_Image.SetCoordinates(this->m_Stop_Col, this->m_Stop_Row);
+//		}
+//		else // Still got some time
+//		{
+//			
+//			int next_r_step = 0, next_c_step = 0;
+//			if (this->m_Stop_Row > y)
+//			{
+//				next_r_step = (this->m_Stop_Row - y) / availTime;
+//				y += next_r_step;
+//			}
+//			else
+//			{
+//				next_r_step = (y - this->m_Stop_Row) / availTime;
+//				y -= next_r_step;
+//			}
+//
+//			if (this->m_Stop_Col > x)
+//			{
+//				next_c_step = (this->m_Stop_Col - x) / availTime;
+//				x += next_c_step;
+//			}
+//			else
+//			{
+//				next_c_step = (x - this->m_Stop_Col) / availTime;
+//				x -= next_c_step;
+//			}
+//			this->m_Image.SetCoordinates(x, y);
+//		}
+//	}
+//} // VOnUpdate
 
 
 // ========================================================================================================================================

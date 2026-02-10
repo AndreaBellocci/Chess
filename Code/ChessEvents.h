@@ -3,12 +3,16 @@
 // 
 
 #pragma once
+#include <string>
+
+#include "../Libraries/EngineUtility.h"
 #include "../Libraries/EventManager.h"
 #include "Pieces.h"
 
 
 // Debug Helpers
-#if DEBUGGING
+#if _DEBUG
+#include <cstdio>
 template <typename ...Args>
 __forceinline void DBG_OnEventConstructor(const char* eventStr, Args... args)
 {
@@ -38,12 +42,12 @@ public:
 		DBG_OnEventConstructor("%-32s: %d %d", typeid(*this).name(), x, y);
 	} // Constructor
 
-	__forceinline virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
+	constexpr virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
 	{
 		return Event_LeftButtonDown::sk_EventType;
 	} // end method VGetEventType
 
-	__forceinline static ENGINE_NAMESPACE::EventType GetEventType()
+	constexpr static ENGINE_NAMESPACE::EventType GetEventType()
 	{
 		return Event_LeftButtonDown::sk_EventType;
 	} // GetEventType
@@ -67,12 +71,12 @@ public:
 		DBG_OnEventConstructor("%-32s: %d %d", typeid(*this).name(), x, y);
 	} // Constructor
 
-	__forceinline virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
+	constexpr virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
 	{
 		return Event_RightButtonDown::sk_EventType;
 	} // end method VGetEventType
 
-	__forceinline static ENGINE_NAMESPACE::EventType GetEventType()
+	constexpr static ENGINE_NAMESPACE::EventType GetEventType()
 	{
 		return Event_RightButtonDown::sk_EventType;
 	} // GetEventType
@@ -96,12 +100,12 @@ public:
 		DBG_OnEventConstructor("%-32s: %d %d", typeid(*this).name(), x, y);
 	} // Constructor
 
-	__forceinline virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
+	constexpr virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
 	{
 		return Event_SelectSquare::sk_EventType;
 	} // end method VGetEventType
 
-	__forceinline static ENGINE_NAMESPACE::EventType GetEventType()
+	constexpr static ENGINE_NAMESPACE::EventType GetEventType()
 	{
 		return Event_SelectSquare::sk_EventType;
 	} // GetEventType
@@ -125,12 +129,12 @@ public:
 		DBG_OnEventConstructor("%-32s", typeid(*this).name());
 	} // Constructor
 
-	__forceinline virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
+	constexpr virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
 	{
 		return Event_SelectionReset::sk_EventType;
 	} // end method VGetEventType
 
-	__forceinline static ENGINE_NAMESPACE::EventType GetEventType()
+	constexpr static ENGINE_NAMESPACE::EventType GetEventType()
 	{
 		return Event_SelectionReset::sk_EventType;
 	} // GetEventType
@@ -151,12 +155,12 @@ public:
 		DBG_OnEventConstructor("%-32s: %d", typeid(*this).name(), indexInBoard);
 	} // Constructor
 
-	__forceinline virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
+	constexpr virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
 	{
 		return Event_IllegalMove::sk_EventType;
 	} // end method VGetEventType
 
-	__forceinline static ENGINE_NAMESPACE::EventType GetEventType()
+	constexpr static ENGINE_NAMESPACE::EventType GetEventType()
 	{
 		return Event_IllegalMove::sk_EventType;
 	} // GetEventType
@@ -179,12 +183,12 @@ public:
 		DBG_OnEventConstructor("%-32s: %d", typeid(*this).name(), indexInBoard);
 	} // Constructor
 
-	__forceinline virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
+	constexpr virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
 	{
 		return Event_PieceSelected::sk_EventType;
 	} // end method VGetEventType
 
-	__forceinline static ENGINE_NAMESPACE::EventType GetEventType()
+	constexpr static ENGINE_NAMESPACE::EventType GetEventType()
 	{
 		return Event_PieceSelected::sk_EventType;
 	} // GetEventType
@@ -208,12 +212,12 @@ public:
 		DBG_OnEventConstructor("%-32s: from %d to %d", typeid(*this).name(), fromIndex, destIndex);
 	} // Constructor
 
-	__forceinline virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
+	constexpr virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
 	{
 		return Event_StartMovePiece::sk_EventType;
 	} // end method VGetEventType
 
-	__forceinline static ENGINE_NAMESPACE::EventType GetEventType()
+	constexpr static ENGINE_NAMESPACE::EventType GetEventType()
 	{
 		return Event_StartMovePiece::sk_EventType;
 	} // GetEventType
@@ -239,12 +243,12 @@ public:
 		DBG_OnEventConstructor("%-32s: from %d to %d", typeid(*this).name(), fromIndex, destIndex);
 	} // Constructor
 
-	__forceinline virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
+	constexpr virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
 	{
 		return Event_Castle::sk_EventType;
 	} // end method VGetEventType
 
-	__forceinline static ENGINE_NAMESPACE::EventType GetEventType()
+	constexpr static ENGINE_NAMESPACE::EventType GetEventType()
 	{
 		return Event_Castle::sk_EventType;
 	} // GetEventType
@@ -268,12 +272,12 @@ public:
 		DBG_OnEventConstructor("%-32s: arrived at %d", typeid(*this).name(), destIndex);
 	} // Constructor
 
-	__forceinline virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
+	constexpr virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
 	{
 		return Event_EndMovePiece::sk_EventType;
 	} // end method VGetEventType
 
-	__forceinline static ENGINE_NAMESPACE::EventType GetEventType()
+	constexpr static ENGINE_NAMESPACE::EventType GetEventType()
 	{
 		return Event_EndMovePiece::sk_EventType;
 	} // GetEventType
@@ -297,12 +301,12 @@ public:
 		DBG_OnEventConstructor("%-32s: %s:", typeid(*this).name(), eaten->GetPieceName().c_str());
 	} // Constructor
 
-	__forceinline virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
+	constexpr virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
 	{
 		return Event_PieceEaten::sk_EventType;
 	} // end method VGetEventType
 
-	__forceinline static ENGINE_NAMESPACE::EventType GetEventType()
+	constexpr static ENGINE_NAMESPACE::EventType GetEventType()
 	{
 		return Event_PieceEaten::sk_EventType;
 	} // GetEventType
@@ -325,12 +329,12 @@ public:
 		DBG_OnEventConstructor("%-32s: promoting %s", typeid(*this).name(), m_Pawn->GetPieceName().c_str());
 	} // Constructor
 
-	__forceinline virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
+	constexpr virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
 	{
 		return Event_PawnPromotion::sk_EventType;
 	} // end method VGetEventType
 
-	__forceinline static ENGINE_NAMESPACE::EventType GetEventType()
+	constexpr static ENGINE_NAMESPACE::EventType GetEventType()
 	{
 		return Event_PawnPromotion::sk_EventType;
 	} // GetEventType
@@ -353,12 +357,12 @@ public:
 		DBG_OnEventConstructor("%-32s on king at pos %d", typeid(*this).name(), king_pos);
 	} // Constructor
 
-	__forceinline virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
+	constexpr virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
 	{
 		return Event_Check::sk_EventType;
 	} // end method VGetEventType
 
-	__forceinline static ENGINE_NAMESPACE::EventType GetEventType()
+	constexpr static ENGINE_NAMESPACE::EventType GetEventType()
 	{
 		return Event_Check::sk_EventType;
 	} // GetEventType
@@ -381,12 +385,12 @@ public:
 		DBG_OnEventConstructor("%-32s", typeid(*this).name());
 	} // Constructor
 
-	__forceinline virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
+	constexpr virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
 	{
 		return Event_EndTurn::sk_EventType;
 	} // end method VGetEventType
 
-	__forceinline static ENGINE_NAMESPACE::EventType GetEventType()
+	constexpr static ENGINE_NAMESPACE::EventType GetEventType()
 	{
 		return Event_EndTurn::sk_EventType;
 	} // GetEventType
@@ -414,12 +418,12 @@ public:
 		DBG_OnEventConstructor("*** %-32s %s! ***", typeid(*this).name(), s.c_str());
 	} // Constructor
 
-	__forceinline virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
+	constexpr virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
 	{
 		return Event_EndMatch::sk_EventType;
 	} // end method VGetEventType
 
-	__forceinline static ENGINE_NAMESPACE::EventType GetEventType()
+	constexpr static ENGINE_NAMESPACE::EventType GetEventType()
 	{
 		return Event_EndMatch::sk_EventType;
 	} // GetEventType

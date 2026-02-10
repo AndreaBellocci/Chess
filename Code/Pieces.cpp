@@ -1,65 +1,56 @@
 // Milan, 11ht December 2021
-//	Completed on December, 11
+//	Completed: 8th February 2026, Chicago
 //
 
+#include "Types.h"
 #include "Pieces.h"
-#include "../Libraries/Logger.h"
-using namespace ENGINE_NAMESPACE;
+#include "Chess.h"
+#include "ErrorCodes.h"
 
-PieceSet Piece::s_Set;
+#include <string>
 
 // ========================================================================================================================================
 // Class Piece Definition
 // ========================================================================================================================================
 
-Piece::Piece(Pieces ID, const std::string& pieceName)
-	: m_ID(ID), m_MovePieceImpl(nullptr), m_CanEatKingImpl(nullptr), m_CanMoveImpl(nullptr),
-	m_Alive(false), m_PieceName(pieceName)
-{
-
-#if DEBUGGING
-	if (Piece::s_Set[(size_t)ID] != nullptr)
-		LOG_WARNING(LOGS::L_UNEXPECTED_VALID_POINTER, "Destroying an existing piece");
-#endif
-
-	Piece::s_Set[(size_t)ID] = std::unique_ptr<Piece>(this);
-	this->m_Components.clear();
-} // Constructor
+Piece::Piece(Pieces ID, Pieces king_ID, const std::string& pieceName)
+	: m_id(ID), m_king_id(king_ID), m_piece_name(pieceName), m_piece_pos(INVALID),
+	m_MovePieceImpl(nullptr), m_CanEatKingImpl(nullptr), m_CanMoveImpl(nullptr),
+	m_Alive(true), m_CachedMoves()
+{} // Constructor
 
 Piece::~Piece()
 {
-	this->m_Components.clear();
+	this->m_Alive = false;
+	this->m_CachedMoves.clear();
 } // Destructor
 
-void Piece::BuildPossibleMoves(int indexInBoard, const Board& board, PossibleMovesIndeces& outMoves, bool allowCheck) const
+void Piece::Reset(int new_pos)
 {
-	ThrowIfNullptr(this->m_MovePieceImpl, LOGS::L_INVALID_POINTER, true);
+	this->m_Alive = true;
+	this->m_CachedMoves = {};
+	this->m_piece_pos = new_pos;
+} // Reset
 
-	this->m_MovePieceImpl(this->m_ID, indexInBoard, board, outMoves, allowCheck);
+void Piece::BuildPossibleMoves(const Chess& the_game, bool allow_checks)
+{
+	// Do not rebuild if already cached
+	if (this->m_Alive && this->m_CachedMoves.empty())
+		this->m_MovePieceImpl(this->m_id, this->m_piece_pos, the_game, this->m_king_id, this->m_CachedMoves, allow_checks);
 } // BuildPossibleMoves
 
-bool Piece::CanEatKing(int this_index, int king_index, const board_t& board) const
+bool Piece::CanEatKing(int king_pos, const board_t& board) const
 {
-	ThrowIfNullptr(this->m_CanEatKingImpl, LOGS::L_INVALID_POINTER, true);
-
-	return this->m_CanEatKingImpl(this_index, king_index, board);
+	return this->m_Alive && this->m_CanEatKingImpl(this->m_piece_pos, king_pos, board);
 } // CanEatKing
 
-bool Piece::CanMove(int this_index, const Board& board) const
+bool Piece::CanMove(int this_index, const Chess& the_game, bool allow_checks) const
 {
-	ThrowIfNullptr(this->m_CanEatKingImpl, LOGS::L_INVALID_POINTER, true);
-
-	return this->m_CanMoveImpl(this_index, board);
+	const auto my_king_pos = the_game.m_Pieces[static_cast<int>(this->m_king_id)]->GetPiecePos();
+	return this->m_Alive && this->m_CanMoveImpl(this->m_piece_pos, the_game, this->m_king_id, my_king_pos, allow_checks);
 } // CanMove
 
-IPieceComponent* Piece::GetComponent(const std::string& componentName) const
-{
-	auto it = this->m_Components.find(componentName);
-	if (it == this->m_Components.end())
-		return nullptr;
-	else
-		return (*it).second.get();
-} // GetComponent
+
 
 // ========================================================================================================================================
 // ========================================================================================================================================
@@ -67,59 +58,59 @@ IPieceComponent* Piece::GetComponent(const std::string& componentName) const
 // ========================================================================================================================================
 // ========================================================================================================================================
 
-Rook::Rook(Pieces ID, const std::string& pieceName)
-	: Piece(ID, pieceName)
+Rook::Rook(Pieces ID, Pieces king_ID, const std::string& pieceName)
+	: Piece(ID, king_ID, pieceName)
 {
-	this->m_MovePieceImpl = Rook_BuildPossibleMoves;
+	this->m_MovePieceImpl  = Rook_BuildPossibleMoves;
 	this->m_CanEatKingImpl = Rook_CanEatKingInSquare;
-	this->m_CanMoveImpl = Rook_CanMove;
+	this->m_CanMoveImpl    = Rook_CanMove;
 } // Rook Constructor
 
-Knight::Knight(Pieces ID, const std::string& pieceName)
-	: Piece(ID, pieceName)
+Knight::Knight(Pieces ID, Pieces king_ID, const std::string& pieceName)
+	: Piece(ID, king_ID, pieceName)
 {
-	this->m_MovePieceImpl = Knight_BuildPossibleMoves;
+	this->m_MovePieceImpl  = Knight_BuildPossibleMoves;
 	this->m_CanEatKingImpl = Knight_CanEatKingInSquare;
-	this->m_CanMoveImpl = Knight_CanMove;
+	this->m_CanMoveImpl    = Knight_CanMove;
 } // Knight Constructor
 
-Bishop::Bishop(Pieces ID, const std::string& pieceName)
-	: Piece(ID, pieceName)
+Bishop::Bishop(Pieces ID, Pieces king_ID, const std::string& pieceName)
+	: Piece(ID, king_ID, pieceName)
 {
-	this->m_MovePieceImpl = Bishop_BuildPossibleMoves;
+	this->m_MovePieceImpl  = Bishop_BuildPossibleMoves;
 	this->m_CanEatKingImpl = Bishop_CanEatKingInSquare;
-	this->m_CanMoveImpl = Bishop_CanMove;
+	this->m_CanMoveImpl    = Bishop_CanMove;
 } // Bishop Constructor
 
-Queen::Queen(Pieces ID, const std::string& pieceName)
-	: Piece(ID, pieceName)
+Queen::Queen(Pieces ID, Pieces king_ID, const std::string& pieceName)
+	: Piece(ID, king_ID, pieceName)
 {
-	this->m_MovePieceImpl = Queen_BuildPossibleMoves;
+	this->m_MovePieceImpl  = Queen_BuildPossibleMoves;
 	this->m_CanEatKingImpl = Queen_CanEatKingInSquare;
-	this->m_CanMoveImpl = Queen_CanMove;
+	this->m_CanMoveImpl    = Queen_CanMove;
 } // Queen Constructor
 
-King::King(Pieces ID, const std::string& pieceName)
-	: Piece(ID, pieceName)
+King::King(Pieces ID, Pieces king_ID, const std::string& pieceName)
+	: Piece(ID, king_ID, pieceName)
 {
-	this->m_MovePieceImpl = King_BuildPossibleMoves;
+	this->m_MovePieceImpl  = King_BuildPossibleMoves;
 	this->m_CanEatKingImpl = King_CanEatKingInSquare;
-	this->m_CanMoveImpl = King_CanMove;
+	this->m_CanMoveImpl    = King_CanMove;
 } // King Constructor
 
-Pawn::Pawn(Pieces ID, const std::string& pieceName)
-	: Piece(ID, pieceName), m_Current(Promotions::Null)
+Pawn::Pawn(Pieces ID, Pieces king_ID, const std::string& pieceName)
+	: Piece(ID, king_ID, pieceName), m_Rank(Promotions::Null)
 {
-	this->m_MovePieceImpl = Pawn_BuildPossibleMoves;
+	this->m_MovePieceImpl  = Pawn_BuildPossibleMoves;
 	this->m_CanEatKingImpl = Pawn_CanEatKingInSquare;
-	this->m_CanMoveImpl = Pawn_CanMove;
+	this->m_CanMoveImpl    = Pawn_CanMove;
 } // Pawn Constructor
 
 
 void Pawn::Promote(Promotions new_piece)
 {
 	// Each pawn can be promoted only once
-	if (this->m_Current == Promotions::Null)
+	if (this->m_Rank == Promotions::Null)
 	{
 		// Black or white?
 		PieceType type;
@@ -128,46 +119,35 @@ void Pawn::Promote(Promotions new_piece)
 		switch (new_piece)
 		{
 		case Promotions::Rook:
-			type = (this->m_ID >= Pieces::White_Rook_1 ? PieceType::White_Rook : PieceType::Black_Rook);
-			this->m_MovePieceImpl = Rook_BuildPossibleMoves;
+			type = (this->m_king_id == Pieces::White_King ? PieceType::White_Rook : PieceType::Black_Rook);
+			this->m_MovePieceImpl  = Rook_BuildPossibleMoves;
 			this->m_CanEatKingImpl = Rook_CanEatKingInSquare;
-			this->m_CanMoveImpl = Rook_CanMove;
-			LOG_MESSAGE(LOGS::L_INFO, "Promoting pawn to Rook");
+			this->m_CanMoveImpl    = Rook_CanMove;
 			break;
 
 		case Promotions::Knight:
-			type = (this->m_ID >= Pieces::White_Rook_1 ? PieceType::White_Knight : PieceType::Black_Knight);
-			this->m_MovePieceImpl = Knight_BuildPossibleMoves;
+			type = (this->m_king_id == Pieces::White_King ? PieceType::White_Knight : PieceType::Black_Knight);
+			this->m_MovePieceImpl  = Knight_BuildPossibleMoves;
 			this->m_CanEatKingImpl = Knight_CanEatKingInSquare;
-			this->m_CanMoveImpl = Knight_CanMove;
-			LOG_MESSAGE(LOGS::L_INFO, "Promoting pawn to Knight");
+			this->m_CanMoveImpl    = Knight_CanMove;
 			break;
 
 		case Promotions::Bishop:
-			type = (this->m_ID >= Pieces::White_Rook_1 ? PieceType::White_Bishop : PieceType::Black_Bishop);
-			this->m_MovePieceImpl = Bishop_BuildPossibleMoves;
+			type = (this->m_king_id == Pieces::White_King ? PieceType::White_Bishop : PieceType::Black_Bishop);
+			this->m_MovePieceImpl  = Bishop_BuildPossibleMoves;
 			this->m_CanEatKingImpl = Bishop_CanEatKingInSquare;
-			this->m_CanMoveImpl = Bishop_CanMove;
-			LOG_MESSAGE(LOGS::L_INFO, "Promoting pawn to Bishop");
+			this->m_CanMoveImpl    = Bishop_CanMove;
 			break;
 
 		case Promotions::Queen:
-			type = (this->m_ID >= Pieces::White_Rook_1 ? PieceType::White_Queen : PieceType::Black_Queen);
-			this->m_MovePieceImpl = Queen_BuildPossibleMoves;
+			type = (this->m_king_id == Pieces::White_King ? PieceType::White_Queen : PieceType::Black_Queen);
+			this->m_MovePieceImpl  = Queen_BuildPossibleMoves;
 			this->m_CanEatKingImpl = Queen_CanEatKingInSquare;
-			this->m_CanMoveImpl = Queen_CanMove;
-			LOG_MESSAGE(LOGS::L_INFO, "Promoting pawn to Queen");
+			this->m_CanMoveImpl    = Queen_CanMove;
 			break;
 
 		default:
-			LOG_ERROR(LOGS::L_UNKNOWN_CODE, "Invalid pawn promotion");
-			return;
+			THROW_CHESS_EXCEPTION(ErrorCode::InvalidPromotion, "The promotion %d is not valid", static_cast<int>(new_piece));
 		}
-
-		// Change components to match the new identity
-		this->m_Current = new_piece;
-		auto it = this->m_Components.begin();
-		for (it; it != this->m_Components.end(); ++it)
-			it->second->VChangePieceComponent(type);
 	}
 } // Promote

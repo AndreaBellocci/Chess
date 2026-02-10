@@ -1,145 +1,82 @@
 // Milan, 11ht December 2021
-//	Completed on December, 11
+//	Completed: 8th February 2026, Chicago
 //
 
 #pragma once
-#include <map>
-#include <array>
 #include <vector>
 #include <string>
 #include <memory>
-#include "PieceComponents.h"
+#include <map>
 
+#include "Types.h"
+#include "Chess.h"
 
-// Forward declarations for classes/structs defined in other headers
-struct Board;
-
-enum class Pieces : char
-{
-	Null = -1,
-	Black_Rook_1,
-	Black_Rook_2,
-	Black_Knight_1,
-	Black_Knight_2,
-	Black_Bishop_1,
-	Black_Bishop_2,
-	Black_Queen,
-	Black_King,
-	Black_Pawn_1,
-	Black_Pawn_2,
-	Black_Pawn_3,
-	Black_Pawn_4,
-	Black_Pawn_5,
-	Black_Pawn_6,
-	Black_Pawn_7,
-	Black_Pawn_8,
-
-	White_Rook_1,
-	White_Rook_2,
-	White_Knight_1,
-	White_Knight_2,
-	White_Bishop_1,
-	White_Bishop_2,
-	White_Queen,
-	White_King,
-	White_Pawn_1,
-	White_Pawn_2,
-	White_Pawn_3,
-	White_Pawn_4,
-	White_Pawn_5,
-	White_Pawn_6,
-	White_Pawn_7,
-	White_Pawn_8,
-
-	NumPieces
-}; // End Scoped enum Pieces
-
-// This is awful, pieces themselves should not even care about being in a board or whatever,
-// but some algorithms requires the simpler board type (board_t), so not doing it it's worse
-// and I have no time or desire to come up with a better solution
-#define BOARD_SIDE 8
-typedef std::array<class Piece*, BOARD_SIDE * BOARD_SIDE> board_t;
-typedef std::array<std::unique_ptr<Piece>, (size_t)Pieces::NumPieces> PieceSet;
 
 // ========================================================================================================================================
-// Chess algorithms - they're implemented in ChessAlgorithms.cpp
+// Chess algorithms - they're implemented in files inside 'Pieces'
 // ========================================================================================================================================
-typedef std::vector<int> PossibleMovesIndeces;
+typedef std::vector<int> PossibleMoves;
 
-void Rook_BuildPossibleMoves(Pieces this_ID, int indexInBoard, const Board& board, PossibleMovesIndeces& outMoves, bool allowChecks = false);
-void Knight_BuildPossibleMoves(Pieces this_ID, int indexInBoard, const Board& board, PossibleMovesIndeces& outMoves, bool allowChecks = false);
-void Bishop_BuildPossibleMoves(Pieces this_ID, int indexInBoard, const Board& board, PossibleMovesIndeces& outMoves, bool allowChecks = false);
-void Queen_BuildPossibleMoves(Pieces this_ID, int indexInBoard, const Board& board, PossibleMovesIndeces& outMoves, bool allowChecks = false);
-void King_BuildPossibleMoves(Pieces this_ID, int indexInBoard, const Board& board, PossibleMovesIndeces& outMoves, bool allowChecks = false);
-void Pawn_BuildPossibleMoves(Pieces this_ID, int indexInBoard, const Board& board, PossibleMovesIndeces& outMoves, bool allowChecks = false);
+void Rook_BuildPossibleMoves  (Pieces rook_id,   int rook_pos,	 const Chess& the_game, Pieces my_king_id, PossibleMoves& out_moves, bool allow_checks);
+void Knight_BuildPossibleMoves(Pieces knight_id, int knight_pos, const Chess& the_game, Pieces my_king_id, PossibleMoves& out_moves, bool allow_checks);
+void Bishop_BuildPossibleMoves(Pieces bishop_id, int bishop_pos, const Chess& the_game, Pieces my_king_id, PossibleMoves& out_moves, bool allow_checks);
+void Queen_BuildPossibleMoves (Pieces queen_id,  int queen_pos,	 const Chess& the_game, Pieces my_king_id, PossibleMoves& out_moves, bool allow_checks);
+void King_BuildPossibleMoves  (Pieces king_id,   int king_pos,	 const Chess& the_game, Pieces my_king_id, PossibleMoves& out_moves, bool allow_checks);
+void Pawn_BuildPossibleMoves  (Pieces pawn_id,   int pawn_pos,	 const Chess& the_game, Pieces my_king_id, PossibleMoves& out_moves, bool allow_checks);
 
-bool Rook_CanEatKingInSquare(int rook_index, int king_index, const board_t& board);
-bool Knight_CanEatKingInSquare(int knight_index, int king_index, const board_t& board);
-bool Bishop_CanEatKingInSquare(int bishop_index, int king_index, const board_t& board);
-bool Queen_CanEatKingInSquare(int queen_index, int king_index, const board_t& board);
-bool King_CanEatKingInSquare(int our_king_index, int king_index, const board_t& board);
-bool Pawn_CanEatKingInSquare(int pawn_index, int king_index, const board_t& board);
+bool Rook_CanEatKingInSquare  (int rook_pos,   int enemy_king_pos, const board_t& board);
+bool Knight_CanEatKingInSquare(int knight_pos, int enemy_king_pos, const board_t& board);
+bool Bishop_CanEatKingInSquare(int bishop_pos, int enemy_king_pos, const board_t& board);
+bool Queen_CanEatKingInSquare (int queen_pos,  int enemy_king_pos, const board_t& board);
+bool King_CanEatKingInSquare  (int king_pos,   int enemy_king_pos, const board_t& board);
+bool Pawn_CanEatKingInSquare  (int pawn_pos,   int enemy_king_pos, const board_t& board);
 
-bool Rook_CanMove(int this_index, const Board& board);
-bool Knight_CanMove(int this_index, const Board& board);
-bool Bishop_CanMove(int this_index, const Board& board);
-bool Queen_CanMove(int this_index, const Board& board);
-bool King_CanMove(int this_index, const Board& board);
-bool Pawn_CanMove(int this_index, const Board& board);
+bool Rook_CanMove  (int rook_pos,   const Chess& the_game, Pieces my_king_id, int my_king_pos, bool allow_checks);
+bool Knight_CanMove(int knight_pos, const Chess& the_game, Pieces my_king_id, int my_king_pos, bool allow_checks);
+bool Bishop_CanMove(int bishop_pos, const Chess& the_game, Pieces my_king_id, int my_king_pos, bool allow_checks);
+bool Queen_CanMove (int queen_pos,  const Chess& the_game, Pieces my_king_id, int my_king_pos, bool allow_checks);
+bool King_CanMove  (int king_pos,   const Chess& the_game, Pieces my_king_id, int my_king_pos, bool allow_checks);
+bool Pawn_CanMove  (int pawn_pos,   const Chess& the_game, Pieces my_king_id, int my_king_pos, bool allow_checks);
 
-bool IsKingUnderCheck(const board_t& board, int king_pos);
-bool CanPlayerMove(bool player, const Board& board);
 
 // ========================================================================================================================================
 // Class Piece Declaration
 // ========================================================================================================================================
 class Piece
 {
-	friend class ChessGame;
-	friend bool SetUpPieceFromFile(const std::string& xmlName, Pieces pieceID, const std::string& pieceName);
-
-	// ========================================================================================================================================
-	// Typedef for method's implementation Declaration
-	// ========================================================================================================================================
-	typedef void (*MovePieceImpl)(Pieces this_ID, int indexInBoard, const Board& board, PossibleMovesIndeces& outMoves, bool allowChecks);
-	typedef bool (*CanEatKingInSquareImpl)(int piece_index, int king_index, const board_t& board);
-	typedef bool (*CanMoveImpl)(int piece_index, const Board& board);
-
-	
-protected:
-	Piece(Pieces ID, const std::string& pieceName);
+	typedef void (*BuildMoveTreeImpl)		(Pieces pawn_id, int pawn_pos, const Chess& the_game, Pieces my_king_id, PossibleMoves& out_moves, bool allow_checks);
+	typedef bool (*CanEatKingInSquareImpl)	(int pawn_pos, int enemy_king_pos, const board_t& board);
+	typedef bool (*CanMoveImpl)				(int pawn_pos, const Chess& the_game, Pieces my_king_id, int my_king_pos, bool allow_checks);
 
 public:
 	virtual ~Piece();
 
-	IPieceComponent* GetComponent(const std::string& componentName) const;
+	void Reset(int new_pos);
+	void BuildPossibleMoves(const Chess& the_game, bool allow_checks);
+	bool CanEatKing(int king_pos, const board_t& board) const;
+	bool CanMove(int this_index, const Chess& the_game, bool allow_checks) const;
 
-	inline void Die()			{ this->m_Alive = false; } // A piece cannot be revived
-	inline bool IsAlive() const { return this->m_Alive; }
+	inline int GetPiecePos() const noexcept   { return this->m_piece_pos; }
+	inline Pieces GetPieceID() const noexcept { return this->m_id; }
+	inline const std::string& GetPieceName() const noexcept { return this->m_piece_name; }
 
-	inline Pieces GetPieceID() const { return this->m_ID; }
-	inline const std::string& GetPieceName() const { return this->m_PieceName; };
-
-	void BuildPossibleMoves(int indexInBoard, const Board& board, PossibleMovesIndeces& outMoves, bool allowCheck) const;
-	bool CanEatKing(int this_index, int king_index, const board_t& board) const;
-	bool CanMove(int this_index, const Board& board) const;
-
-	static __forceinline const PieceSet& GetSet() { return Piece::s_Set; }
+	inline void Die() noexcept { this->m_Alive = false; } // A piece cannot be revived
+	inline bool IsAlive() const noexcept { return this->m_Alive; }
 
 protected:
-	// This method is useful only on app startup, when placing pieces on the board
-	inline void SetAlive(bool alive) { this->m_Alive = alive; }
+	Piece(Pieces ID, Pieces king_ID, const std::string& pieceName);
 
-	const Pieces m_ID;
+	const Pieces m_id;
+	const Pieces m_king_id;
+	const std::string m_piece_name;
+	int m_piece_pos;
+
 	CanMoveImpl m_CanMoveImpl;
-	MovePieceImpl m_MovePieceImpl;
+	BuildMoveTreeImpl m_MovePieceImpl;
 	CanEatKingInSquareImpl m_CanEatKingImpl;
-	std::map<std::string, std::shared_ptr<IPieceComponent>> m_Components;
+	PossibleMoves m_CachedMoves;
 
-	static PieceSet s_Set;
-
-
-	const std::string m_PieceName;
+private:
 	bool m_Alive;
 }; // End class Piece declaration
 
@@ -151,58 +88,49 @@ protected:
 
 class Rook : public Piece
 {
-	friend bool SetUpPieceFromFile(const std::string& xmlName, Pieces pieceID, const std::string& pieceName);
-protected:
-	Rook(Pieces ID, const std::string& pieceName);
+public:
+	Rook(Pieces ID, Pieces king_ID, const std::string& pieceName);
 }; // End Class Rook declaration
 
 
 class Knight : public Piece
 {
-	friend bool SetUpPieceFromFile(const std::string& xmlName, Pieces pieceID, const std::string& pieceName);
-protected:
-	Knight(Pieces ID, const std::string& pieceName);
+public:
+	Knight(Pieces ID, Pieces king_ID, const std::string& pieceName);
 }; // End Class Knight declaration
 
 
 class Bishop : public Piece
 {
-	friend bool SetUpPieceFromFile(const std::string& xmlName, Pieces pieceID, const std::string& pieceName);
-protected:
-	Bishop(Pieces ID, const std::string& pieceName);
+public:
+	Bishop(Pieces ID, Pieces king_ID, const std::string& pieceName);
 }; // End Class Bishop declaration
 
 
 class Queen : public Piece
 {
-	friend bool SetUpPieceFromFile(const std::string& xmlName, Pieces pieceID, const std::string& pieceName);
-protected:
-	Queen(Pieces ID, const std::string& pieceName);
+public:
+	Queen(Pieces ID, Pieces king_ID, const std::string& pieceName);
 }; // End Class Queen declaration
 
 
 class King : public Piece
 {
-	friend bool SetUpPieceFromFile(const std::string& xmlName, Pieces pieceID, const std::string& pieceName);
-protected:
-	King(Pieces ID, const std::string& pieceName);
+public:
+	King(Pieces ID, Pieces king_ID, const std::string& pieceName);
 }; // End Class King declaration
 
 
 class Pawn : public Piece
 {
-	friend bool SetUpPieceFromFile(const std::string& xmlName, Pieces pieceID, const std::string& pieceName);
-
 public:
-	enum class Promotions { Null = 0, Rook, Knight, Bishop, Queen };
+	Pawn(Pieces ID, Pieces king_ID, const std::string& pieceName);
 
-	inline Promotions GetPromotion() const { return this->m_Current; }
-	inline bool HasBeenPromoted() const { return this->m_Current != Promotions::Null; }
+	enum class Promotions { Null = 0, Rook, Knight, Bishop, Queen };
+	inline Promotions GetPromotion() const noexcept { return this->m_Rank; }
+	inline bool HasBeenPromoted() const noexcept { return this->m_Rank != Promotions::Null; }
 	void Promote(Promotions new_piece);
 
-protected:
-	Pawn(Pieces ID, const std::string& pieceName);
-
 private:
-	Promotions m_Current;
+	Promotions m_Rank;
 }; // End Class Pawn declaration
