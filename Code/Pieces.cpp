@@ -41,10 +41,11 @@ void Piece::BuildPossibleMoves(const Chess& the_game, bool allow_checks)
 
 bool Piece::CanEatKing(int king_pos, const board_t& board) const
 {
-	return this->m_Alive && this->m_CanEatKingImpl(this->m_piece_pos, king_pos, board);
+	// If the ID of the piece at this piece's position is not this piece's id, it means we're evaluating a possible future scenario
+	return this->m_Alive && board[this->m_piece_pos]->m_id == this->m_id && this->m_CanEatKingImpl(this->m_piece_pos, king_pos, board);
 } // CanEatKing
 
-bool Piece::CanMove(int this_index, const Chess& the_game, bool allow_checks) const
+bool Piece::CanMove(const Chess& the_game, bool allow_checks) const
 {
 	const auto my_king_pos = the_game.m_Pieces[static_cast<int>(this->m_king_id)]->GetPiecePos();
 	return this->m_Alive && this->m_CanMoveImpl(this->m_piece_pos, the_game, this->m_king_id, my_king_pos, allow_checks);

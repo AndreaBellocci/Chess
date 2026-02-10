@@ -34,7 +34,7 @@ void Rook_BuildPossibleMoves(Pieces rook_id, int rook_pos, const Chess& the_game
 	for (int i = row - 1; i >= 0; --i)
 	{
 		// Move helper will return true only if we should stop searching in this direction
-		const int dest = row * BOARD_SIDE + i;
+		const int dest = i * BOARD_SIDE + col;
 		if (MoveHelper(dest, rook_id, rook_pos, the_game, my_king_id, my_king_pos, out_moves, allow_checks))
 			break;
 	}
@@ -43,7 +43,7 @@ void Rook_BuildPossibleMoves(Pieces rook_id, int rook_pos, const Chess& the_game
 	for (int i = row + 1; i < BOARD_SIDE; ++i)
 	{
 		// Move helper will return true only if we should stop searching in this direction
-		const int dest = row * BOARD_SIDE + i;
+		const int dest = i * BOARD_SIDE + col;
 		if (MoveHelper(dest, rook_id, rook_pos, the_game, my_king_id, my_king_pos, out_moves, allow_checks))
 			break;
 	}

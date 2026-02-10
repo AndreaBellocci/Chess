@@ -31,6 +31,8 @@ class ChessGame
 {
 public:
 	ChessGame(const std::string& xml_settings_file);
+	void Update();
+	bool ShouldQuit() const noexcept { return this->m_should_quit; }
 
 	// Event Listeners
 	void OnPieceSelected(const ENGINE_NAMESPACE::IEventPtr& pEvent);
@@ -40,6 +42,7 @@ public:
 	void OnPawnPromotion(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnPieceEaten(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnEndTurn(const ENGINE_NAMESPACE::IEventPtr& pEvent);
+	void OnEndMatch(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 
 	std::string PrintGameStatus() const; // For debug purposes, returns a string representation of the board and pieces on it
 
@@ -50,13 +53,17 @@ public:
 
 	const piece_list& GetPieces() const noexcept { return this->m_game.m_Pieces; }
 	const Chess& GetGameState() const noexcept { return this->m_game; }
+
 	ENGINE_NAMESPACE::EventManager& GetGameEventManager() noexcept { return this->m_privateEventManager; }
 
 private:
 	Chess m_game; // Current state of the board and pieces
 
+	bool m_should_quit = false;
 	bool m_AllowChecks = false; // If false, then the app prevents players from leaving the king under check
 	ENGINE_NAMESPACE::EventManager m_privateEventManager; // Event manager for this game, used to trigger events and register listeners
+
+	bool CanNextPlayerMove() const;
 
 	// We use FEN notation (https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation)
 	// to define every piece on the board and an empty space to indicate that no piece is in that position

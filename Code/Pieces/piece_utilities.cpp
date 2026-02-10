@@ -143,7 +143,7 @@ bool MoveHelper(int dest, Pieces piece_id, int src, const Chess& the_game, Piece
 			if (IsKingUnderCheck(pieces, b2, my_king_id, my_king_pos))
 			{
 				DebugHelper(piece_id, src, dest, "move to", false);
-				return false;
+				return false; // Keep searching
 			}
 		}
 
@@ -166,20 +166,20 @@ bool MoveHelper(int dest, Pieces piece_id, int src, const Chess& the_game, Piece
 			{
 				// Build what board would look like if player did this move
 				board_t b2 = board;
-				b2[dest] = b2[my_king_pos];
-				b2[my_king_pos] = nullptr;
+				b2[dest] = b2[src];
+				b2[src] = nullptr;
 
 				if (IsKingUnderCheck(pieces, b2, my_king_id, my_king_pos))
 				{
 					DebugHelper(piece_id, src, dest, "capture", false);
-					return false; // Keep searching
+					return true; // Stop searching
 				}
 			}
 
 			// Capture the enemy piece
 			DebugHelper(piece_id, src, dest, "capture", true);
 			out_moves.push_back(dest);
-			return false; // Keep searching
+			return true; // Stop searching
 		}
 
 		// Stop searching in this direction

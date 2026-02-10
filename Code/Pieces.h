@@ -48,19 +48,22 @@ class Piece
 	typedef bool (*CanEatKingInSquareImpl)	(int pawn_pos, int enemy_king_pos, const board_t& board);
 	typedef bool (*CanMoveImpl)				(int pawn_pos, const Chess& the_game, Pieces my_king_id, int my_king_pos, bool allow_checks);
 
+	friend class ChessGame;
 public:
 	virtual ~Piece();
 
 	void Reset(int new_pos);
 	void BuildPossibleMoves(const Chess& the_game, bool allow_checks);
 	bool CanEatKing(int king_pos, const board_t& board) const;
-	bool CanMove(int this_index, const Chess& the_game, bool allow_checks) const;
+	bool CanMove(const Chess& the_game, bool allow_checks) const;
 
 	inline int GetPiecePos() const noexcept   { return this->m_piece_pos; }
 	inline Pieces GetPieceID() const noexcept { return this->m_id; }
 	inline const std::string& GetPieceName() const noexcept { return this->m_piece_name; }
+	inline const PossibleMoves* GetCachedMoves() const noexcept { return &this->m_CachedMoves; }
+	inline void ClearCachedMoves() noexcept { this->m_CachedMoves.clear(); }
 
-	inline void Die() noexcept { this->m_Alive = false; } // A piece cannot be revived
+	inline void Die() noexcept { this->m_Alive = false; this->m_piece_pos = INVALID; this->m_CachedMoves.clear(); } // A piece cannot be revived
 	inline bool IsAlive() const noexcept { return this->m_Alive; }
 
 protected:
@@ -69,14 +72,13 @@ protected:
 	const Pieces m_id;
 	const Pieces m_king_id;
 	const std::string m_piece_name;
-	int m_piece_pos;
 
 	CanMoveImpl m_CanMoveImpl;
 	BuildMoveTreeImpl m_MovePieceImpl;
 	CanEatKingInSquareImpl m_CanEatKingImpl;
+	
 	PossibleMoves m_CachedMoves;
-
-private:
+	int m_piece_pos;
 	bool m_Alive;
 }; // End class Piece declaration
 

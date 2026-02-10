@@ -387,6 +387,7 @@ void HumanView::VOnInitialize(const std::string& xml_view_settings)
 	evtman.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnSelectSquare),	Event_SelectSquare::GetEventType());
 	evtman.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnSelectionReset),	Event_SelectionReset::GetEventType());
 	evtman.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnStartMovePiece),	Event_StartMovePiece::GetEventType());
+	evtman.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnEndMovePiece),	Event_EndMovePiece::GetEventType());
 	evtman.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnCastle),			Event_Castle::GetEventType());
 	evtman.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnPawnPromotion),	Event_PawnPromotion::GetEventType());
 	evtman.AddListener(fastdelegate::MakeDelegate(this, &HumanView::OnCheck),			Event_Check::GetEventType());
@@ -485,47 +486,47 @@ void HumanView::VOnInput()
 	}
 
 	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-		this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_LeftButtonDown(this->m_Hovering_x, this->m_Hovering_y)));
+		this->m_GameState.GetGameEventManager().PostEvent(IEventPtr(new Event_LeftButtonDown(this->m_Hovering_x, this->m_Hovering_y)));
 
 	if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
-		this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_RightButtonDown(this->m_Hovering_x, this->m_Hovering_y)));
+		this->m_GameState.GetGameEventManager().PostEvent(IEventPtr(new Event_RightButtonDown(this->m_Hovering_x, this->m_Hovering_y)));
 
-	// Keyboard - the only keys relevant are arrows end enters; TODO: alt enters and menu accelerators
-	if (IsKeyPressed(KEY_DOWN))
-	{
-		// Move hovering one down
-		if (this->m_Hovering_y != INVALID)
-			this->m_Hovering_y = (this->m_Hovering_y + 1) % BOARD_SIDE;
-		else
-			this->m_Hovering_y = 0;
-	}
+	// Keyboard
+	//if (IsKeyPressed(KEY_DOWN))
+	//{
+	//	// Move hovering one down
+	//	if (this->m_Hovering_y != INVALID)
+	//		this->m_Hovering_y = (this->m_Hovering_y + 1) % BOARD_SIDE;
+	//	else
+	//		this->m_Hovering_y = 0;
+	//}
 
-	if (IsKeyPressed(KEY_UP))
-	{
-		// Move hovering one up
-		if (this->m_Hovering_y != INVALID)
-			this->m_Hovering_y = (this->m_Hovering_y - 1 + BOARD_SIDE) % BOARD_SIDE;
-		else
-			this->m_Hovering_y = BOARD_SIDE - 1;
-	}
+	//if (IsKeyPressed(KEY_UP))
+	//{
+	//	// Move hovering one up
+	//	if (this->m_Hovering_y != INVALID)
+	//		this->m_Hovering_y = (this->m_Hovering_y - 1 + BOARD_SIDE) % BOARD_SIDE;
+	//	else
+	//		this->m_Hovering_y = BOARD_SIDE - 1;
+	//}
 
-	if (IsKeyPressed(KEY_RIGHT))
-	{
-		// Move hovering one right
-		if (this->m_Hovering_x != INVALID)
-			this->m_Hovering_x = (this->m_Hovering_x + 1) % BOARD_SIDE;
-		else
-			this->m_Hovering_x = 0;
-	}
+	//if (IsKeyPressed(KEY_RIGHT))
+	//{
+	//	// Move hovering one right
+	//	if (this->m_Hovering_x != INVALID)
+	//		this->m_Hovering_x = (this->m_Hovering_x + 1) % BOARD_SIDE;
+	//	else
+	//		this->m_Hovering_x = 0;
+	//}
 
-	if (IsKeyPressed(KEY_LEFT))
-	{
-		// Move hovering one up
-		if (this->m_Hovering_x != INVALID)
-			this->m_Hovering_x = (this->m_Hovering_x - 1 + BOARD_SIDE) % BOARD_SIDE;
-		else
-			this->m_Hovering_x = BOARD_SIDE - 1;
-	}
+	//if (IsKeyPressed(KEY_LEFT))
+	//{
+	//	// Move hovering one up
+	//	if (this->m_Hovering_x != INVALID)
+	//		this->m_Hovering_x = (this->m_Hovering_x - 1 + BOARD_SIDE) % BOARD_SIDE;
+	//	else
+	//		this->m_Hovering_x = BOARD_SIDE - 1;
+	//}
 
 	if (IsKeyPressed(KEY_ENTER))
 	{
@@ -536,7 +537,7 @@ void HumanView::VOnInput()
 		}
 		else if (this->m_Hovering_x != INVALID && this->m_Hovering_y != INVALID) // Select hovering
 		{
-			this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_SelectSquare(this->m_Hovering_x, this->m_Hovering_y)));
+			this->m_GameState.GetGameEventManager().PostEvent(IEventPtr(new Event_SelectSquare(this->m_Hovering_x, this->m_Hovering_y)));
 		}
 	}
 
@@ -680,20 +681,6 @@ void HumanView::DrawBoard() const
 		DrawRectangleLinesEx(rect, 5.0f, RED);
 	}
 
-	//// Draw pieces
-	//auto& set = Piece::GetSet();
-	//for (int i = 0; i < set.size(); ++i)
-	//{
-	//	if (set[i]->IsAlive())
-	//	{
-	//		auto comp = dynamic_cast<Piece2DRenderComponent*>(set[i]->GetComponent(RENDER_COMPONENT_NAME));
-	//		Assert(comp);
-
-	//		// Coordinates and row/col indeces are kinda reversed
-	//		comp->VOnDraw();
-	//	}
-	//}
-
 	// Draw possible targets
 	if (this->m_Targets)
 	{
@@ -746,77 +733,90 @@ void HumanView::OnLeftClick(const ENGINE_NAMESPACE::IEventPtr& pEvent)
 	// Get event
 	const Event_LeftButtonDown& event = *static_cast<Event_LeftButtonDown*>(pEvent.get());
 
-	// Reset selection only if left-clicking on the same square */
+	// Reset selection only if left-clicking on the same square
 	if (event.m_x == INVALID || event.m_y == INVALID || (this->m_Selected_x == event.m_x && this->m_Selected_y == event.m_y))
 	{
-		this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_SelectionReset));
+		this->m_GameState.GetGameEventManager().PostEvent(IEventPtr(new Event_SelectionReset));
 	}
 	else
 	{
 		// Select new square
-		this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_SelectSquare(event.m_x, event.m_y)));
+		this->m_GameState.GetGameEventManager().PostEvent(IEventPtr(new Event_SelectSquare(event.m_x, event.m_y)));
 	}
 } // OnLeftClick Listener
+
 
 void HumanView::OnRightClick(const ENGINE_NAMESPACE::IEventPtr& pEvent)
 {
 	// Reset selection no matter where cursor is
-	this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_SelectionReset));
+	this->m_GameState.GetGameEventManager().PostEvent(IEventPtr(new Event_SelectionReset));
 } // OnRightClick Listener
+
 
 void HumanView::OnSelectSquare(const ENGINE_NAMESPACE::IEventPtr& pEvent)
 {
 	// Get event
 	const Event_SelectSquare& event = *static_cast<Event_SelectSquare*>(pEvent.get());
+	const auto& game_state = this->m_GameState.GetGameState();
+	const int index = event.m_y * BOARD_SIDE + event.m_x; // Coordinates and indeces are kinda reversed
+	auto& evtman = this->m_GameState.GetGameEventManager();
 
-	int index = event.m_y * BOARD_SIDE + event.m_x; // Coordinates and indeces are kinda reversed
+	// If a piece was already selected
+	if (this->m_Targets)
+	{
+		// If new selection corresponds to a possible move
+		const auto size = this->m_Targets->size();
+		for (int i = 0; i < size; ++i)
+		{
+			if ((*this->m_Targets)[i] == index)
+			{
+				// Fire an event to move the piece that was selected
+				int old_sel_index = this->m_Selected_y * BOARD_SIDE + this->m_Selected_x;
+				Piece* selected = game_state.m_Board[old_sel_index];
+				evtman.PostEvent(IEventPtr(new Event_StartMovePiece(selected, old_sel_index, index)));
+				return;
+			}
+		}
 
-	//// If a piece was already selected
-	//size_t size = this->m_Targets.size();
-	//if (size != 0)
-	//{
-	//	// If new selection corresponds to a possible move
-	//	for (int i = 0; i < size; ++i)
-	//	{
-	//		if (this->m_Targets[i] == index)
-	//		{
-	//			// Fire an event to move the piece that was selected
-	//			int old_sel_index = this->m_Selected_y * BOARD_SIDE + this->m_Selected_x;
-	//			Piece* selected = this->m_Board.GetGameState().m_Board[old_sel_index];
-	//			this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_StartMovePiece(selected, old_sel_index, index)));
-	//			return;
-	//		}
-	//	}
+		// If execution gets here then the selection wasn't a valid move
+		if (game_state.m_Board[index] != nullptr) // User selected another piece
+		{
+			// Fire an event to select new piece
+			this->m_Selected_x = event.m_x;
+			this->m_Selected_y = event.m_y;
+			evtman.PostEvent(IEventPtr(new Event_PieceSelected(index)));
 
-	//	// If execution gets here then the selection wasn't a valid move
-	//	if (this->m_Board.GetGameState().m_Board[index] != nullptr) // User selected another piece
-	//	{
-	//		// Fire an event to select new piece
-	//		this->m_Selected_x = event.m_x;
-	//		this->m_Selected_y = event.m_y;
-	//		this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_PieceSelected(index)));
-	//	}
-	//	else // Illegal move
-	//		this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_IllegalMove(index)));
-	//}
-	//else if (this->m_Board.GetGameState().m_Board[index] != nullptr) // User selected another piece
-	//{
-	//	// Fire an event to select new piece
-	//	this->m_Selected_x = event.m_x;
-	//	this->m_Selected_y = event.m_y;
-	//	this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_PieceSelected(index)));
-	//}
-	//else
-	//{
-	//	// User selected a white space - reset selection (shouldn't be necessary)
-	//	this->m_GameState.GetGameEventManager().TriggerEvent(IEventPtr(ENGINE_NEW Event_SelectionReset));
-	//}
+			// Update possible targets for the new selection
+			this->m_Targets = game_state.m_Board[index]->GetCachedMoves();
+		}
+		else // Illegal move
+			evtman.PostEvent(IEventPtr(new Event_IllegalMove(index)));
+	}
+	else if (game_state.m_Board[index] != nullptr) // User selected another piece
+	{
+		// Fire an event to select new piece
+		this->m_Selected_x = event.m_x;
+		this->m_Selected_y = event.m_y;
+		evtman.PostEvent(IEventPtr(new Event_PieceSelected(index)));
+
+		// Update possible targets for the new selection
+		this->m_Targets = game_state.m_Board[index]->GetCachedMoves();
+	}
+	else
+	{
+		// User selected a white space - reset selection (shouldn't be necessary)
+		evtman.PostEvent(IEventPtr(new Event_SelectionReset));
+	}
 } // OnSelectSquare Listener
+
 
 void HumanView::OnSelectionReset(const ENGINE_NAMESPACE::IEventPtr& pEvent)
 {
 	this->m_Selected_x = INVALID;
 	this->m_Selected_y = INVALID;
+
+	// Reset possible targets
+	this->m_Targets = nullptr;
 } // OnSelectionReset Listener
 
 
@@ -832,7 +832,18 @@ void HumanView::OnStartMovePiece(const ENGINE_NAMESPACE::IEventPtr& pEvent)
 	//Assert(comp);
 
 	//this->m_ProcessManager.AddProcess(ProcessPtr(
-	//	ENGINE_NEW MovePieceProcess(*comp, MilliToNano(250), stop_row, stop_col)));
+	//	new MovePieceProcess(*comp, MilliToNano(250), stop_row, stop_col)));
+} // OnStartMovePiece Listener
+
+void HumanView::OnEndMovePiece(const ENGINE_NAMESPACE::IEventPtr& pEvent)
+{
+	const Event_EndMovePiece& event = *static_cast<Event_EndMovePiece*>(pEvent.get());
+	const int id = static_cast<int>(event.m_Piece->GetPieceID());
+
+	// Update texture position
+	const int new_pos = event.m_Dest;
+	this->m_textures[id].screen_pos.x = static_cast<float>(this->m_Offset_Left + (new_pos % BOARD_SIDE) * this->m_Square_Side + PIECE_OFFSET);
+	this->m_textures[id].screen_pos.y = static_cast<float>(this->m_Offset_Top  + (new_pos / BOARD_SIDE) * this->m_Square_Side + PIECE_OFFSET);
 } // OnStartMovePiece Listener
 
 void HumanView::OnCastle(const ENGINE_NAMESPACE::IEventPtr& pEvent)
@@ -846,8 +857,8 @@ void HumanView::OnCastle(const ENGINE_NAMESPACE::IEventPtr& pEvent)
 	//auto comp = static_cast<Piece2DRenderComponent*>(event.m_Piece->GetComponent(RENDER_COMPONENT_NAME));
 	//Assert(comp);
 
-	//auto delay = ENGINE_NEW DelayProcess(MilliToNano(100));
-	//delay->AttachChildProcess(ProcessPtr(ENGINE_NEW MovePieceProcess(*comp, MilliToNano(250), stop_row, stop_col)));
+	//auto delay = new DelayProcess(MilliToNano(100));
+	//delay->AttachChildProcess(ProcessPtr(new MovePieceProcess(*comp, MilliToNano(250), stop_row, stop_col)));
 	//this->m_ProcessManager.AddProcess(ProcessPtr(delay));
 } // OnCastle Listener
 

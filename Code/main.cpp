@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 	app.OnInitialize();
 
 	// Main game loop
-	while (!WindowShouldClose())
+	while (!WindowShouldClose() && !app.ShouldQuit())
 	{
 		// Check for input
 		app.OnInput();
@@ -32,6 +32,20 @@ int main(int argc, char* argv[])
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	} // Main loop
+
+	if (app.ShouldQuit())
+	{
+		// Wait for 10 seconds just to show a little more the board
+		const auto start = std::chrono::high_resolution_clock::now();
+		auto now = start;
+		while ((now - start) < std::chrono::seconds(10))
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			app.OnRender();
+
+			now = std::chrono::high_resolution_clock::now();
+		}
+	}
 	
 	// Release Raylib resources
 	CloseWindow();

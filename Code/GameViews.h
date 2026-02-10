@@ -61,6 +61,7 @@ class IGameView
 {
 public:
 	IGameView(ChessGame& board) : m_GameState(board) {} // Constructor
+	virtual ~IGameView() = default;
 
 	virtual void VOnInitialize(const std::string& xml_view_settings) = 0;
 	virtual void VOnResize() = 0;
@@ -70,7 +71,6 @@ public:
 
 protected:
 	ChessGame& m_GameState;
-	static ENGINE_NAMESPACE::EventManager& s_GlobalEventManager;
 }; // End interface IGameView
  
 
@@ -131,6 +131,7 @@ private:
 	void OnSelectSquare(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnSelectionReset(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnStartMovePiece(const ENGINE_NAMESPACE::IEventPtr& pEvent);
+	void OnEndMovePiece(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnCastle(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnPawnPromotion(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnCheck(const ENGINE_NAMESPACE::IEventPtr& pEvent);

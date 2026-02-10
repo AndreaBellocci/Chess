@@ -88,7 +88,7 @@ private:
 
 #if _DEBUG
 #define CASE(x) case Pieces::x: str = #x; break;
-__forceinline static void DebugHelper(Pieces id, int from, int to, const char* action, bool ok)
+inline static void DebugHelper(Pieces id, int from, int to, const char* action, bool ok)
 {
 	// Map id to string
 	const char* str = nullptr;
@@ -134,8 +134,14 @@ __forceinline static void DebugHelper(Pieces id, int from, int to, const char* a
 	const int dest_row = to / BOARD_SIDE;
 	const int dest_col = to % BOARD_SIDE;
 
+	// Turn row and col into chess coordinates (e.g., 0,0 -> a8, 7,7 -> h1)
+	const char s_r = '8' - src_row; // Row 0 is 8, row 7 is 1
+	const char s_c = 'a' + src_col; // Col 0 is 'a', col 7 is 'h'
+	const char d_r = '8' - dest_row; // Row 0 is 8, row 7 is 1
+	const char d_c = 'a' + dest_col; // Col 0 is 'a', col 7 is 'h'	
+
 	// Create debug string
-	printf("%s from (%d %d) %s to (%d %d) - (%s)\n", str, src_row, src_col, (ok ? "can" : "can't"), dest_row, dest_col, action);
+	printf("%s from %c%c %s %s %c%c\n", str, s_c, s_r, (ok ? "can" : "can't"), action, d_c, d_r);
 } // DebugHelper
 #undef CASE
 #else

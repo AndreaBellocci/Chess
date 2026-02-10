@@ -133,13 +133,14 @@ ChessApp::~ChessApp()
 	//		}
 	//	}
 	//}
+	this->m_Views.clear();
 } // Destructor
 
 
 void ChessApp::OnInitialize()
 {
 	// Create human view
-	this->m_Views.push_back(std::unique_ptr<IGameView>(new HumanView(this->m_app)));
+	this->m_Views.push_back(std::make_unique<HumanView>(this->m_app));
 
 	/*const char* pieceNames[] = {
 		"Black_Rook_1", "Black_Rook_2", "Black_Knight_1", "Black_Knight_2", "Black_Bishop_1", "Black_Bishop_2", "Black_Queen", "Black_King",
@@ -155,16 +156,7 @@ void ChessApp::OnInitialize()
 	//		&& "Cannot instantiace piece");
 	//}
 
-	//// Register events listeners
-	//s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &ChessApp::OnSelectionReset),	Event_SelectionReset::GetEventType());
-	//s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &ChessApp::OnPieceSelected),		Event_PieceSelected::GetEventType());
-	//s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &ChessApp::OnIllegalMove),		Event_IllegalMove::GetEventType());
-	//s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &ChessApp::OnStartMovePiece),	Event_StartMovePiece::GetEventType());
-	//s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &ChessApp::OnCastle),			Event_Castle::GetEventType());
-	//s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &ChessApp::OnEndMovePiece),		Event_EndMovePiece::GetEventType());
-	//s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &ChessApp::OnPieceEaten),		Event_PieceEaten::GetEventType());
-	//s_GlobalEventManager.AddListener(fastdelegate::MakeDelegate(this, &ChessApp::OnEndTurn),			Event_EndTurn::GetEventType());
-
+	
 	auto it = this->m_Views.begin();
 	for (it; it != this->m_Views.end(); ++it)
 		(*it)->VOnInitialize("");
@@ -180,8 +172,10 @@ void ChessApp::OnInput()
 
 void ChessApp::OnUpdate(std::chrono::nanoseconds delta)
 {
-	//s_GlobalEventManager.Update();
+	// Update the game state
+	this->m_app.Update();
 
+	// Update views
 	auto it = this->m_Views.begin();
 	for (it; it != this->m_Views.end(); ++it)
 		(*it)->VOnUpdate(delta);

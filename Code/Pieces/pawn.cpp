@@ -9,6 +9,7 @@
 
 void Pawn_BuildPossibleMoves(Pieces pawn_id, int pawn_pos, const Chess& the_game, Pieces my_king_id, PossibleMoves& out_moves, bool allow_checks)
 {
+	// Pacman effect must not exist
 	const int row = pawn_pos / BOARD_SIDE;
 	const int col = pawn_pos % BOARD_SIDE;
 	const size_t max = the_game.m_Board.size();
@@ -28,9 +29,10 @@ void Pawn_BuildPossibleMoves(Pieces pawn_id, int pawn_pos, const Chess& the_game
 		moved = (row != 6);
 	}
 
+
 	const int dest1 = pawn_pos + row_delta; // Normal move, but there must be no piece on dest
-	const int dest2 = pawn_pos + row_delta - 1; // Eat left, but there must be an enemy piece to be eaten
-	const int dest3 = pawn_pos + row_delta + 1; // Eat right, but there must be an enemy piece to be eaten
+	const int dest2 = (col > 0)				 ? (pawn_pos + row_delta - 1) : INVALID; // Eat left, but there must be an enemy piece to be eaten
+	const int dest3 = (col < BOARD_SIDE - 1) ? (pawn_pos + row_delta + 1) : INVALID; // Eat right, but there must be an enemy piece to be eaten
 	const int dest4 = pawn_pos + (row_delta * 2); // Sprint start, but the pawn must not have moved yet and there must not be pieces in between
 
 	if (0 <= dest1 && dest1 < max && the_game.m_Board[dest1] == nullptr) MoveHelper(dest1, pawn_id, pawn_pos, the_game, my_king_id, my_king_pos, out_moves, allow_checks);
@@ -84,14 +86,18 @@ void Pawn_BuildPossibleMoves(Pieces pawn_id, int pawn_pos, const Chess& the_game
 
 bool Pawn_CanEatKingInSquare(int pawn_pos, int enemy_king_pos, const board_t& board)
 {
+	// Pacman effect must not exist
+	const int row = pawn_pos / BOARD_SIDE;
+	const int col = pawn_pos % BOARD_SIDE;
+
 	// This time we need the id to determine the direction of the move
 	const Pieces pawn_id = board[pawn_pos]->GetPieceID();
 
 	// Black pawns move down, white pawns move up, so row delta is positive for black and negative for white
 	const int row_delta = (first_black_piece_id <= pawn_id && pawn_id <= last_black_piece_id) ? BOARD_SIDE : (0i64 - BOARD_SIDE);
 
-	const int dest1 = pawn_pos + row_delta - 1; // Eat left, but there must be an enemy piece to be eaten
-	const int dest2 = pawn_pos + row_delta + 1; // Eat right, but there must be an enemy piece to be eaten
+	const int dest1 = (col > 0)				 ? (pawn_pos + row_delta - 1) : INVALID; // Eat left, but there must be an enemy piece to be eaten
+	const int dest2 = (col < BOARD_SIDE - 1) ? (pawn_pos + row_delta + 1) : INVALID; // Eat right, but there must be an enemy piece to be eaten
 	return dest1 == enemy_king_pos || dest2 == enemy_king_pos;
 } // Pawn_CanEatKingInSquare
 
@@ -101,10 +107,14 @@ bool Pawn_CanMove(int pawn_pos, const Chess& the_game, Pieces my_king_id, int my
 	// Black pawns move down, white pawns move up, so row delta is positive for black and negative for white
 	const int row_delta = (first_black_piece_id <= my_king_id && my_king_id <= last_black_piece_id) ? BOARD_SIDE : (0i64 - BOARD_SIDE);
 
+	// Pacman effect must not exist
+	const int row = pawn_pos / BOARD_SIDE;
+	const int col = pawn_pos % BOARD_SIDE;
+
 	// Note: we're also considering the initial two-row move, because the latter is only possible if the first one is possible.
 	const int dest1 = pawn_pos + row_delta; // Normal move, but there must be no piece on dest
-	const int dest2 = pawn_pos + row_delta - 1; // Eat left, but there must be an enemy piece to be eaten
-	const int dest3 = pawn_pos + row_delta + 1; // Eat right, but there must be an enemy piece to be eaten
+	const int dest2 = (col > 0)				 ? (pawn_pos + row_delta - 1) : INVALID; // Eat left, but there must be an enemy piece to be eaten
+	const int dest3 = (col < BOARD_SIDE - 1) ? (pawn_pos + row_delta + 1) : INVALID; // Eat right, but there must be an enemy piece to be eaten
 	const size_t max = the_game.m_Board.size();
 	return (
 		(0 <= dest1 && dest1 < max && the_game.m_Board[dest1] == nullptr && CanPieceMoveTo(dest1, pawn_pos, the_game, my_king_id, my_king_pos, allow_checks)) ||
