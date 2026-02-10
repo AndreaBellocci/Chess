@@ -29,8 +29,8 @@ constexpr auto num_piece_types = static_cast<int>(PieceType::Num_Types);
 enum class Pieces : int8_t
 {
 	Null = -1,
-	Black_Rook_King_Side,
 	Black_Rook_Queen_Side,
+	Black_Rook_King_Side,
 	Black_Knight_1,
 	Black_Knight_2,
 	Black_Bishop_1,
@@ -46,8 +46,8 @@ enum class Pieces : int8_t
 	Black_Pawn_7,
 	Black_Pawn_8,
 
-	White_Rook_King_Side,
 	White_Rook_Queen_Side,
+	White_Rook_King_Side,
 	White_Knight_1,
 	White_Knight_2,
 	White_Bishop_1,
@@ -66,15 +66,15 @@ enum class Pieces : int8_t
 	NumPieces
 }; // End Scoped enum Pieces
 
-constexpr auto first_black_piece_id = Pieces::Black_Rook_King_Side;
+constexpr auto first_black_piece_id = Pieces::Black_Rook_Queen_Side;
 constexpr auto last_black_piece_id  = Pieces::Black_Pawn_8;
-constexpr auto first_white_piece_id = Pieces::White_Rook_King_Side;
+constexpr auto first_white_piece_id = Pieces::White_Rook_Queen_Side;
 constexpr auto last_white_piece_id  = Pieces::White_Pawn_8;
 
-constexpr auto first_black_piece_index = static_cast<int>(Pieces::Black_Rook_King_Side);
-constexpr auto last_black_piece_index  = static_cast<int>(Pieces::Black_Pawn_8);
-constexpr auto first_white_piece_index = static_cast<int>(Pieces::White_Rook_King_Side);
-constexpr auto last_white_piece_index  = static_cast<int>(Pieces::White_Pawn_8);
+constexpr auto first_black_piece_index = static_cast<int>(first_black_piece_id);
+constexpr auto last_black_piece_index  = static_cast<int>(last_black_piece_id);
+constexpr auto first_white_piece_index = static_cast<int>(first_white_piece_id);
+constexpr auto last_white_piece_index  = static_cast<int>(last_white_piece_id);
 
 // Forward declaration
 class Piece;

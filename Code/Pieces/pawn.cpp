@@ -29,7 +29,6 @@ void Pawn_BuildPossibleMoves(Pieces pawn_id, int pawn_pos, const Chess& the_game
 		moved = (row != 6);
 	}
 
-
 	const int dest1 = pawn_pos + row_delta; // Normal move, but there must be no piece on dest
 	const int dest2 = (col > 0)				 ? (pawn_pos + row_delta - 1) : INVALID; // Eat left, but there must be an enemy piece to be eaten
 	const int dest3 = (col < BOARD_SIDE - 1) ? (pawn_pos + row_delta + 1) : INVALID; // Eat right, but there must be an enemy piece to be eaten

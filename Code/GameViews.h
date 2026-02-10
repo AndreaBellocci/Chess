@@ -19,6 +19,12 @@ struct RECT
 	int height;	// Rectangle height
 };
 
+struct TexData
+{
+	const Texture2D* tex;
+	Vector2 screen_pos;
+};
+
 enum class GameViewType
 {
 	GameView_Human,
@@ -36,18 +42,21 @@ class PawnPromoter
 {
 	friend class HumanView;
 protected:
-	PawnPromoter() = default;
+	PawnPromoter(ENGINE_NAMESPACE::EventManager& evtman) : m_evtman(evtman) {}
 
 	void PromotePawn(Pawn* const pawn);
 	void OnInput(int hovering_x, int hovering_y, bool selected);
 	void OnRender();
+
+	void Reset() noexcept;
 	bool m_Visible = false;
 
-private:
 	Pawn* m_PawnToPromote = nullptr;
 	int m_Start_x = INVALID;
 	int m_Start_y = INVALID;
 	int m_Hovering = INVALID;
+
+	ENGINE_NAMESPACE::EventManager& m_evtman;
 }; // End class PawnPromoter Declaration
 
 
@@ -115,11 +124,6 @@ public:
 	inline bool GetHighLight_PossibleMoves() const noexcept	{ return this->m_HighLight_PossibleMoves; }
 
 private:
-	struct TexData
-	{
-		const Texture2D* tex;
-		Vector2 screen_pos;
-	};
 	std::array<TexData, num_pieces> m_textures; // Used for rendering and mouse input handling
 
 	// Utility
@@ -131,8 +135,8 @@ private:
 	void OnSelectSquare(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnSelectionReset(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnStartMovePiece(const ENGINE_NAMESPACE::IEventPtr& pEvent);
-	void OnEndMovePiece(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnCastle(const ENGINE_NAMESPACE::IEventPtr& pEvent);
+	void OnPromotePawn(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnPawnPromotion(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnCheck(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnEndMatch(const ENGINE_NAMESPACE::IEventPtr& pEvent);
@@ -262,22 +266,22 @@ private:
 // ========================================================================================================================================
 // Animate pieces movements Process
 // ========================================================================================================================================
-//class MovePieceProcess : public ENGINE_NAMESPACE::Process
-//{
-//public:
-//	explicit MovePieceProcess(Piece2DRenderComponent& image,
-//		ENGINE_NAMESPACE::nanoseconds executionTime, int stop_row_coord, int stop_col_coord);
-//
-//protected:
-//	virtual void VOnUpdate(ENGINE_NAMESPACE::nanoseconds delta) override final;
-//	inline virtual void VOnSuccess() override final {};
-//	inline virtual void VOnFail() override final {};
-//	inline virtual void VOnAbort() override final {};
-//
-//private:
-//	const ENGINE_NAMESPACE::nanoseconds m_TotalTimeAvailable;
-//	ENGINE_NAMESPACE::nanoseconds m_TimePassedSoFar;
-//	Piece2DRenderComponent& m_Image;
-//	const int m_Stop_Row;
-//	const int m_Stop_Col;
-//}; // MovePieceProcess
+class MovePieceProcess : public ENGINE_NAMESPACE::Process
+{
+public:
+	explicit MovePieceProcess(TexData& image,
+		ENGINE_NAMESPACE::nanoseconds executionTime, int stop_row_coord, int stop_col_coord);
+
+protected:
+	virtual void VOnUpdate(ENGINE_NAMESPACE::nanoseconds delta) override final;
+	inline virtual void VOnSuccess() override final {};
+	inline virtual void VOnFail() override final {};
+	inline virtual void VOnAbort() override final {};
+
+private:
+	const ENGINE_NAMESPACE::nanoseconds m_TotalTimeAvailable;
+	ENGINE_NAMESPACE::nanoseconds m_TimePassedSoFar;
+	TexData& m_Image;
+	const int m_Stop_Row;
+	const int m_Stop_Col;
+}; // MovePieceProcess

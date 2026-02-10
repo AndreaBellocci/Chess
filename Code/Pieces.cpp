@@ -42,7 +42,7 @@ void Piece::BuildPossibleMoves(const Chess& the_game, bool allow_checks)
 bool Piece::CanEatKing(int king_pos, const board_t& board) const
 {
 	// If the ID of the piece at this piece's position is not this piece's id, it means we're evaluating a possible future scenario
-	return this->m_Alive && board[this->m_piece_pos]->m_id == this->m_id && this->m_CanEatKingImpl(this->m_piece_pos, king_pos, board);
+	return this->m_Alive && board[this->m_piece_pos] && board[this->m_piece_pos]->m_id == this->m_id && this->m_CanEatKingImpl(this->m_piece_pos, king_pos, board);
 } // CanEatKing
 
 bool Piece::CanMove(const Chess& the_game, bool allow_checks) const
@@ -152,3 +152,18 @@ void Pawn::Promote(Promotions new_piece)
 		}
 	}
 } // Promote
+
+
+const char* PromotionName(Pawn::Promotions promotion)
+{
+	switch (promotion)
+	{
+	case Pawn::Promotions::Null:	return "Reset";
+	case Pawn::Promotions::Rook:	return "Rook";
+	case Pawn::Promotions::Knight:	return "Knight";
+	case Pawn::Promotions::Bishop:	return "Bishop";
+	case Pawn::Promotions::Queen:	return "Queen";
+	default:
+		THROW_CHESS_EXCEPTION(ErrorCode::InvalidPromotion, "The promotion %d is not valid", static_cast<int>(promotion));
+	}
+} // PromotionName

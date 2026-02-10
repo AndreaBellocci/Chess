@@ -319,14 +319,43 @@ private:
 
 
 // ========================================================================================================================================
+// Class Event_PromotePawn Declaration
+// ========================================================================================================================================
+class Event_PromotePawn : public ENGINE_NAMESPACE::IEvent
+{
+public:
+	inline Event_PromotePawn(Pawn* to_promote) : m_Pawn(to_promote)
+	{
+		DBG_OnEventConstructor("%-32s: promoting %s", typeid(*this).name(), m_Pawn->GetPieceName().c_str());
+	} // Constructor
+
+	constexpr virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
+	{
+		return Event_PromotePawn::sk_EventType;
+	} // end method VGetEventType
+
+	constexpr static ENGINE_NAMESPACE::EventType GetEventType()
+	{
+		return Event_PromotePawn::sk_EventType;
+	} // GetEventType
+
+	Pawn* const m_Pawn;
+
+private:
+	static const ENGINE_NAMESPACE::EventType sk_EventType;
+}; // end class Event_PromotePawn declaration
+
+
+// ========================================================================================================================================
 // Class Event_PawnPromotion Declaration
 // ========================================================================================================================================
 class Event_PawnPromotion : public ENGINE_NAMESPACE::IEvent
 {
 public:
-	inline Event_PawnPromotion(Pawn* to_promote) : m_Pawn(to_promote)
+	inline Event_PawnPromotion(Pawn* to_promote, Pawn::Promotions prom) 
+		: m_Pawn(to_promote), m_promotion(prom)
 	{
-		DBG_OnEventConstructor("%-32s: promoting %s", typeid(*this).name(), m_Pawn->GetPieceName().c_str());
+		DBG_OnEventConstructor("%-32s: promoted to %d", typeid(*this).name(), PromotionName(prom));
 	} // Constructor
 
 	constexpr virtual ENGINE_NAMESPACE::EventType VGetEventType() const override
@@ -340,6 +369,7 @@ public:
 	} // GetEventType
 
 	Pawn* const m_Pawn;
+	const Pawn::Promotions m_promotion;
 
 private:
 	static const ENGINE_NAMESPACE::EventType sk_EventType;

@@ -12,8 +12,8 @@
 // Struct Chess represents the state of a chess game, including the pieces and the board.
 struct Chess
 {
-	board_t m_Board; // Current state of the board, with pointers to pieces or nullptr for empty squares
-	piece_list m_Pieces; // List of all pieces, even those that have been captured
+	board_t m_Board = {}; // Current state of the board, with pointers to pieces or nullptr for empty squares
+	piece_list m_Pieces = {}; // List of all pieces, even those that have been captured
 
 	bool m_can_white_castle			= true; // False if king or king's side rook have moved
 	bool m_can_white_castle_long	= true; // False if king or queen's side rook have moved
@@ -38,8 +38,8 @@ public:
 	void OnPieceSelected(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnStartMovePiece(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnCastle(const ENGINE_NAMESPACE::IEventPtr& pEvent);
-	void OnEndMovePiece(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnPawnPromotion(const ENGINE_NAMESPACE::IEventPtr& pEvent);
+	void OnEndMovePiece(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnPieceEaten(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnEndTurn(const ENGINE_NAMESPACE::IEventPtr& pEvent);
 	void OnEndMatch(const ENGINE_NAMESPACE::IEventPtr& pEvent);

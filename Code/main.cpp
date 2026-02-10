@@ -21,21 +21,27 @@ int main(int argc, char* argv[])
 	app.OnInitialize();
 
 	// Main game loop
+	auto now = std::chrono::high_resolution_clock::now();
+	auto prev = now;
 	while (!WindowShouldClose() && !app.ShouldQuit())
 	{
 		// Check for input
 		app.OnInput();
 
 		// Update and draw game state
-		app.OnUpdate({});
+		app.OnUpdate(now - prev);
 		app.OnRender();
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		
+		// Update timings
+		prev = now;
+		now = std::chrono::high_resolution_clock::now();
 	} // Main loop
 
+	// Wait for 10 seconds just to show a little more the board
 	if (app.ShouldQuit())
 	{
-		// Wait for 10 seconds just to show a little more the board
 		const auto start = std::chrono::high_resolution_clock::now();
 		auto now = start;
 		while ((now - start) < std::chrono::seconds(10))

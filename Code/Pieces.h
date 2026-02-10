@@ -129,6 +129,7 @@ public:
 	Pawn(Pieces ID, Pieces king_ID, const std::string& pieceName);
 
 	enum class Promotions { Null = 0, Rook, Knight, Bishop, Queen };
+
 	inline Promotions GetPromotion() const noexcept { return this->m_Rank; }
 	inline bool HasBeenPromoted() const noexcept { return this->m_Rank != Promotions::Null; }
 	void Promote(Promotions new_piece);
@@ -136,3 +137,5 @@ public:
 private:
 	Promotions m_Rank;
 }; // End Class Pawn declaration
+
+const char* PromotionName(Pawn::Promotions promotion);

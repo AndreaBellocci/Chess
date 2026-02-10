@@ -33,6 +33,7 @@ ChessGame::ChessGame(const std::string& xml_settings_file)
 	this->m_privateEventManager.AddListener(fastdelegate::MakeDelegate(this, &ChessGame::OnIllegalMove),	Event_IllegalMove::GetEventType());
 	this->m_privateEventManager.AddListener(fastdelegate::MakeDelegate(this, &ChessGame::OnStartMovePiece),	Event_StartMovePiece::GetEventType());
 	this->m_privateEventManager.AddListener(fastdelegate::MakeDelegate(this, &ChessGame::OnCastle),			Event_Castle::GetEventType());
+	this->m_privateEventManager.AddListener(fastdelegate::MakeDelegate(this, &ChessGame::OnPawnPromotion),	Event_PawnPromotion::GetEventType());
 	this->m_privateEventManager.AddListener(fastdelegate::MakeDelegate(this, &ChessGame::OnEndMovePiece),	Event_EndMovePiece::GetEventType());
 	this->m_privateEventManager.AddListener(fastdelegate::MakeDelegate(this, &ChessGame::OnPieceEaten),		Event_PieceEaten::GetEventType());
 	this->m_privateEventManager.AddListener(fastdelegate::MakeDelegate(this, &ChessGame::OnEndTurn),		Event_EndTurn::GetEventType());
@@ -116,10 +117,10 @@ void ChessGame::PrepareGame(const std::string& fen_string)
 			break;
 
 			// Black pieces
-		case ChessGame::FEN_BLACK_ROOK:	  if (next_promoted) { promotion = Pawn::Promotions::Rook;   next_promoted = false; } piece = FENHelper(this->m_game.m_Pieces, promotion, Pieces::Black_Rook_King_Side, Pieces::Black_Pawn_1, n_black_rooks,   n_black_pawns, 2, "Black", "Rooks");   break;
-		case ChessGame::FEN_BLACK_KNIGHT: if (next_promoted) { promotion = Pawn::Promotions::Knight; next_promoted = false; } piece = FENHelper(this->m_game.m_Pieces, promotion, Pieces::Black_Knight_1,		Pieces::Black_Pawn_1, n_black_knights, n_black_pawns, 2, "Black", "Knights"); break;
-		case ChessGame::FEN_BLACK_BISHOP: if (next_promoted) { promotion = Pawn::Promotions::Bishop; next_promoted = false; } piece = FENHelper(this->m_game.m_Pieces, promotion, Pieces::Black_Bishop_1,		Pieces::Black_Pawn_1, n_black_bishops, n_black_pawns, 2, "Black", "Bishops"); break;
-		case ChessGame::FEN_BLACK_QUEEN:  if (next_promoted) { promotion = Pawn::Promotions::Queen;  next_promoted = false; } piece = FENHelper(this->m_game.m_Pieces, promotion, Pieces::Black_Queen,			Pieces::Black_Pawn_1, n_black_queens,  n_black_pawns, 1, "Black", "Queens");  break;
+		case ChessGame::FEN_BLACK_ROOK:	  if (next_promoted) { promotion = Pawn::Promotions::Rook;   next_promoted = false; } piece = FENHelper(this->m_game.m_Pieces, promotion, Pieces::Black_Rook_Queen_Side, Pieces::Black_Pawn_1, n_black_rooks,   n_black_pawns, 2, "Black", "Rooks");   break;
+		case ChessGame::FEN_BLACK_KNIGHT: if (next_promoted) { promotion = Pawn::Promotions::Knight; next_promoted = false; } piece = FENHelper(this->m_game.m_Pieces, promotion, Pieces::Black_Knight_1,		 Pieces::Black_Pawn_1, n_black_knights, n_black_pawns, 2, "Black", "Knights"); break;
+		case ChessGame::FEN_BLACK_BISHOP: if (next_promoted) { promotion = Pawn::Promotions::Bishop; next_promoted = false; } piece = FENHelper(this->m_game.m_Pieces, promotion, Pieces::Black_Bishop_1,		 Pieces::Black_Pawn_1, n_black_bishops, n_black_pawns, 2, "Black", "Bishops"); break;
+		case ChessGame::FEN_BLACK_QUEEN:  if (next_promoted) { promotion = Pawn::Promotions::Queen;  next_promoted = false; } piece = FENHelper(this->m_game.m_Pieces, promotion, Pieces::Black_Queen,			 Pieces::Black_Pawn_1, n_black_queens,  n_black_pawns, 1, "Black", "Queens");  break;
 
 		case ChessGame::FEN_BLACK_KING:
 			if (n_black_kings >= 1)
@@ -146,10 +147,10 @@ void ChessGame::PrepareGame(const std::string& fen_string)
 			break;
 
 			// White pieces
-		case ChessGame::FEN_WHITE_ROOK:	  if (next_promoted) { promotion = Pawn::Promotions::Rook;   next_promoted = false; } piece = FENHelper(this->m_game.m_Pieces, promotion, Pieces::White_Rook_King_Side, Pieces::White_Pawn_1, n_white_rooks,   n_white_pawns, 2, "White", "Rooks");   break;
-		case ChessGame::FEN_WHITE_KNIGHT: if (next_promoted) { promotion = Pawn::Promotions::Knight; next_promoted = false; } piece = FENHelper(this->m_game.m_Pieces, promotion, Pieces::White_Knight_1,		Pieces::White_Pawn_1, n_white_knights, n_white_pawns, 2, "White", "Knights"); break;
-		case ChessGame::FEN_WHITE_BISHOP: if (next_promoted) { promotion = Pawn::Promotions::Bishop; next_promoted = false; } piece = FENHelper(this->m_game.m_Pieces, promotion, Pieces::White_Bishop_1,		Pieces::White_Pawn_1, n_white_bishops, n_white_pawns, 2, "White", "Bishops"); break;
-		case ChessGame::FEN_WHITE_QUEEN:  if (next_promoted) { promotion = Pawn::Promotions::Queen;  next_promoted = false; } piece = FENHelper(this->m_game.m_Pieces, promotion, Pieces::White_Queen,			Pieces::White_Pawn_1, n_white_queens,  n_white_pawns, 1, "White", "Queens");  break;
+		case ChessGame::FEN_WHITE_ROOK:	  if (next_promoted) { promotion = Pawn::Promotions::Rook;   next_promoted = false; } piece = FENHelper(this->m_game.m_Pieces, promotion, Pieces::White_Rook_Queen_Side, Pieces::White_Pawn_1, n_white_rooks,   n_white_pawns, 2, "White", "Rooks");   break;
+		case ChessGame::FEN_WHITE_KNIGHT: if (next_promoted) { promotion = Pawn::Promotions::Knight; next_promoted = false; } piece = FENHelper(this->m_game.m_Pieces, promotion, Pieces::White_Knight_1,		 Pieces::White_Pawn_1, n_white_knights, n_white_pawns, 2, "White", "Knights"); break;
+		case ChessGame::FEN_WHITE_BISHOP: if (next_promoted) { promotion = Pawn::Promotions::Bishop; next_promoted = false; } piece = FENHelper(this->m_game.m_Pieces, promotion, Pieces::White_Bishop_1,		 Pieces::White_Pawn_1, n_white_bishops, n_white_pawns, 2, "White", "Bishops"); break;
+		case ChessGame::FEN_WHITE_QUEEN:  if (next_promoted) { promotion = Pawn::Promotions::Queen;  next_promoted = false; } piece = FENHelper(this->m_game.m_Pieces, promotion, Pieces::White_Queen,			 Pieces::White_Pawn_1, n_white_queens,  n_white_pawns, 1, "White", "Queens");  break;
 
 		case ChessGame::FEN_WHITE_KING:
 			if (n_white_kings >= 1)
@@ -375,64 +376,29 @@ void ChessGame::OnIllegalMove(const IEventPtr& pEvent)
 
 void ChessGame::OnStartMovePiece(const IEventPtr& pEvent)
 {
+	// Do not update the board, it will be updated by the EndMove event handler
 	const Event_StartMovePiece& event = *static_cast<Event_StartMovePiece*>(pEvent.get());
 	const Pieces piece_id = event.m_Piece->m_id;
 
-	// Look for king castling
-	if ((piece_id == Pieces::Black_King && (this->m_game.m_can_black_castle || this->m_game.m_can_black_castle_long)) || 
-		(piece_id == Pieces::White_King && (this->m_game.m_can_white_castle || this->m_game.m_can_white_castle_long)))
-	{
-		// Find and move also the corresponding rook
-		Pieces rook_id = Pieces::Null;
-		int rook_curr_pos = INVALID;
-
-		// Black Queen-side castle: king in c8 (i.e.: index = 2)  and rook in d8 (i.e.: index = 3)
-		// Black King-side  castle: king in g8 (i.e.: index = 6)  and rook in f8 (i.e.: index = 5)	
-		// White Queen-side castle: king in c1 (i.e.: index = 58) and rook in d1 (i.e.: index = 59)
-		// White King-side  castle: king in g1 (i.e.: index = 62) and rook in f1 (i.e.: index = 61)		
-		Piece* rook = nullptr;
-		switch (event.m_Dest)
-		{
-		case 2:	 rook_curr_pos = 3;	 rook_id = Pieces::Black_Rook_King_Side;  rook = this->m_game.m_Pieces[(size_t)rook_id].get();	break;
-		case 6:	 rook_curr_pos = 5;	 rook_id = Pieces::Black_Rook_Queen_Side; rook = this->m_game.m_Pieces[(size_t)rook_id].get();	break;
-		case 58: rook_curr_pos = 59; rook_id = Pieces::White_Rook_King_Side;  rook = this->m_game.m_Pieces[(size_t)rook_id].get();	break;
-		case 62: rook_curr_pos = 61; rook_id = Pieces::White_Rook_Queen_Side; rook = this->m_game.m_Pieces[(size_t)rook_id].get();	break;
-		default:	
-			// Not castling
-			;
-		}
-
-		if (rook && rook->m_Alive)
-		{
-			// Find rook on board
-			int where_rook;
-			for (where_rook = 0; ; ++where_rook) // If the rook's alive, it must be on the board, so it isn't necessary to check
-				if (this->m_game.m_Board[where_rook] != nullptr && this->m_game.m_Board[where_rook]->m_id == rook_id)
-					break;
-
-			// Prevent player from castling again
-			if (piece_id == Pieces::Black_King)
-				this->m_game.m_can_black_castle = this->m_game.m_can_black_castle_long = false;
-			else
-				this->m_game.m_can_white_castle = this->m_game.m_can_white_castle_long = false;
-
-			// Move the rook
-			this->m_privateEventManager.PostEvent(IEventPtr(new Event_Castle(rook, where_rook, rook_curr_pos)));
-		}
-	}
-	else if ((Pieces::Black_Pawn_1 <= piece_id && piece_id <= Pieces::Black_Pawn_8) ||  // Look for possible en passants 
+	// Look for possible en passants 
+	if ((Pieces::Black_Pawn_1 <= piece_id && piece_id <= Pieces::Black_Pawn_8) ||
 		(Pieces::White_Pawn_1 <= piece_id && piece_id <= Pieces::White_Pawn_8))
 	{
 		// If capturing en passant
 		if (this->m_game.m_en_passant_target_pos == event.m_Dest)
 		{
-			if (Pieces::White_Pawn_1 <= piece_id) // White pawn eat up so look for captured pawn down
+			if (Pieces::White_Pawn_1 <= piece_id)
+			{
+				// White pawn eat up so look for captured pawn down
 				this->m_privateEventManager.PostEvent(IEventPtr(
 					new Event_PieceEaten(this->m_game.m_Board[this->m_game.m_en_passant_target_pos + BOARD_SIDE])));
-			else // Black pawn eat down so look for captured pawn up
+			}
+			else
+			{
+				// Black pawn eat down so look for captured pawn up
 				this->m_privateEventManager.PostEvent(IEventPtr(
 					new Event_PieceEaten(this->m_game.m_Board[this->m_game.m_en_passant_target_pos - BOARD_SIDE])));
-
+			}
 			this->m_game.m_en_passant_target_pos = INVALID;
 		}
 		else // Super sprint
@@ -449,12 +415,63 @@ void ChessGame::OnStartMovePiece(const IEventPtr& pEvent)
 				this->m_game.m_en_passant_target_pos = INVALID;
 		}
 	}
-	else // Every other move reset en passant index
+	else
+	{
+		// Not a pawn moving - reset en passant index
 		this->m_game.m_en_passant_target_pos = INVALID;
+
+		// Look for king castling
+		if ((piece_id == Pieces::Black_King && (this->m_game.m_can_black_castle || this->m_game.m_can_black_castle_long)) ||
+			(piece_id == Pieces::White_King && (this->m_game.m_can_white_castle || this->m_game.m_can_white_castle_long)))
+		{
+			// Find and move also the corresponding rook
+			Pieces rook_id = Pieces::Null;
+			int rook_dest = INVALID;
+
+			// Black Queen-side castle: king in c8 (i.e.: index = 2)  and rook in d8 (i.e.: index = 3)
+			// Black King-side  castle: king in g8 (i.e.: index = 6)  and rook in f8 (i.e.: index = 5)	
+			// White Queen-side castle: king in c1 (i.e.: index = 58) and rook in d1 (i.e.: index = 59)
+			// White King-side  castle: king in g1 (i.e.: index = 62) and rook in f1 (i.e.: index = 61)		
+			Piece* rook = nullptr;
+			switch (event.m_Dest)
+			{
+				// In 960 chess the kings and rooks end up in the same places as in standard chess. Rooks however may start in different positions.
+				// Also, each player can castle only once during each match
+			case 2:	 rook_id = Pieces::Black_Rook_Queen_Side; rook_dest = 3;  this->m_game.m_can_black_castle = this->m_game.m_can_black_castle_long = false; break;
+			case 6:	 rook_id = Pieces::Black_Rook_King_Side;  rook_dest = 5;  this->m_game.m_can_black_castle = this->m_game.m_can_black_castle_long = false; break;
+			case 58: rook_id = Pieces::White_Rook_Queen_Side; rook_dest = 59; this->m_game.m_can_white_castle = this->m_game.m_can_white_castle_long = false; break;
+			case 62: rook_id = Pieces::White_Rook_King_Side;  rook_dest = 61; this->m_game.m_can_white_castle = this->m_game.m_can_white_castle_long = false; break;
+			default:
+				// Not castling - this king can no longer castle
+				if (piece_id == Pieces::Black_King)
+					this->m_game.m_can_black_castle = this->m_game.m_can_black_castle_long = false;
+				else
+					this->m_game.m_can_white_castle = this->m_game.m_can_white_castle_long = false;
+			}
+
+			// Castle
+			if (rook_id != Pieces::Null)
+			{
+				rook = this->m_game.m_Pieces[(size_t)rook_id].get();
+				const int rook_curr_pos = rook->m_piece_pos;
+
+				// Move the rook
+				this->m_privateEventManager.PostEvent(IEventPtr(new Event_Castle(rook, rook_curr_pos, rook_dest)));
+			}
+		}
+		else
+		{
+			// If a rook moves, its player can no longer castle from that side
+			if		(piece_id == Pieces::Black_Rook_Queen_Side) this->m_game.m_can_black_castle_long = false;
+			else if (piece_id == Pieces::Black_Rook_King_Side)  this->m_game.m_can_black_castle = false;
+			else if (piece_id == Pieces::White_Rook_Queen_Side) this->m_game.m_can_white_castle_long = false;
+			else if (piece_id == Pieces::White_Rook_King_Side)  this->m_game.m_can_white_castle = false;
+		}
+	}
 
 	// Remove piece from source position and fire event to move it to the destination position and end the turn
 	this->m_game.m_Board[event.m_Src] = nullptr; // Piece is not anymore there
-	this->m_privateEventManager.TriggerEvent(IEventPtr(new Event_EndMovePiece(event.m_Piece, event.m_Dest)));
+	this->m_privateEventManager.PostEvent(IEventPtr(new Event_EndMovePiece(event.m_Piece, event.m_Dest)));
 } // OnStartMovePiece Listener
 
 
@@ -463,9 +480,22 @@ void ChessGame::OnCastle(const IEventPtr& pEvent)
 	const Event_Castle& event = *static_cast<Event_Castle*>(pEvent.get());
 
 	// Update board 
-	this->m_game.m_Board[event.m_Src] = nullptr; // Piece is not anymore there
+	this->m_game.m_Board[event.m_Src] = nullptr; // Rook is not anymore there
 	this->m_game.m_Board[event.m_Dest] = event.m_Piece;
+	event.m_Piece->m_piece_pos = event.m_Dest;
 } // OnCastle
+
+
+void ChessGame::OnPawnPromotion(const ENGINE_NAMESPACE::IEventPtr& pEvent)
+{
+	const Event_PawnPromotion& event = *static_cast<Event_PawnPromotion*>(pEvent.get());
+
+	// Promote the pawn
+	event.m_Pawn->Promote(event.m_promotion);
+
+	// End this turn
+	this->m_privateEventManager.PostEvent(IEventPtr(new Event_EndTurn()));
+} // OnPawnPromotion
 
 
 void ChessGame::OnEndMovePiece(const IEventPtr& pEvent)
@@ -473,11 +503,8 @@ void ChessGame::OnEndMovePiece(const IEventPtr& pEvent)
 	const Event_EndMovePiece& event = *static_cast<Event_EndMovePiece*>(pEvent.get());
 	const Pieces id = event.m_Piece->m_id;
 
-	// Update piece position
-	const int new_pos = event.m_Dest;
-	event.m_Piece->m_piece_pos = new_pos;
-
 	// If a piece was eaten, fire an event
+	const int new_pos = event.m_Dest;
 	if (this->m_game.m_Board[new_pos] != nullptr)
 	{
 		this->m_privateEventManager.PostEvent(IEventPtr(new Event_PieceEaten(this->m_game.m_Board[new_pos])));
@@ -493,25 +520,34 @@ void ChessGame::OnEndMovePiece(const IEventPtr& pEvent)
 		}
 	}
 
-	// If a pawn needs to be promoted, fire an event
-	if ((this->m_game.m_turn == true &&										// White turn and
-		Pieces::White_Pawn_1 <= id && id <= Pieces::White_Pawn_8 &&	// White pawn and
-		new_pos / BOARD_SIDE == 0) ||							// On first rank	or
-		(this->m_game.m_turn == false &&										// Black turn and
-			Pieces::Black_Pawn_1 <= id && id <= Pieces::Black_Pawn_8 && // Black pawn and
-			new_pos / BOARD_SIDE == BOARD_SIDE - 1))				// On last rank
-	{
-		auto pawn = static_cast<Pawn*>(event.m_Piece);
-
-		if (!pawn->HasBeenPromoted())
-			this->m_privateEventManager.PostEvent(IEventPtr(new Event_PawnPromotion(pawn)));
-	}
-
+	// Update piece position
+	event.m_Piece->m_piece_pos = new_pos;
+	
 	// Update board and reset possible moves for all the pieces
 	this->m_game.m_Board[new_pos] = event.m_Piece;
 	for (auto& p : this->m_game.m_Pieces)
 		p->m_CachedMoves.clear();
 
+	// If a pawn needs to be promoted, fire an event
+	if ((this->m_game.m_turn == true &&								// White turn and
+		Pieces::White_Pawn_1 <= id && id <= Pieces::White_Pawn_8 &&	// White pawn and
+		new_pos / BOARD_SIDE == 0)									// On first rank
+		||																// or
+		(this->m_game.m_turn == false &&							// Black turn and
+		Pieces::Black_Pawn_1 <= id && id <= Pieces::Black_Pawn_8 && // Black pawn and
+		new_pos / BOARD_SIDE == BOARD_SIDE - 1))					// On last rank
+	{
+		auto pawn = static_cast<Pawn*>(event.m_Piece);
+		if (!pawn->HasBeenPromoted())
+		{
+			this->m_privateEventManager.PostEvent(IEventPtr(new Event_PromotePawn(pawn)));
+
+			// Turn will end when the promotion has been chosen
+			return;
+		}
+	}
+
+	// End this turn
 	this->m_privateEventManager.PostEvent(IEventPtr(new Event_EndTurn()));
 } // OnEndMovePiece Listener
 
