@@ -6,9 +6,6 @@
 #include <unordered_map>
 #include "ThirdParty\FastDelegate\FastDelegate.h"
 
-#define INVALID -1
-
-
 
 // Debug (nonoptimized code, asserts active, PROFILE defined to assist debugging)
 // Profile (optimized code, asserts disabled, PROFILE defined to assist optimization)

@@ -1,7 +1,10 @@
 // Milan, copied from older files on 7th December 2021
 //
 #include <chrono>
+#include <memory>
+#include <list>
 #include "EventManager.h"
+#include "EngineUtility.h"
 #include "Logger.h"
 
 BEGIN_ENGINE_NAMESPACE
@@ -104,7 +107,7 @@ bool EventManager::AbortEvent(const EventType& inType, bool allOfType)
 		while (it != eventQueue.end())
 		{
 			// Removing an item from the queue will invalidate the iterator, so have it point to the next member
-			auto thisIt = it;
+			const EventList::iterator thisIt = it;
 			++it;
 
 			if ((*thisIt)->VGetEventType() == inType)
@@ -120,7 +123,7 @@ bool EventManager::AbortEvent(const EventType& inType, bool allOfType)
 			// Remove all events
 			while (it != eventQueue.end())
 			{
-				auto thisIt = it;
+				const EventList::iterator thisIt = it;
 				++it;
 
 				if ((*thisIt)->VGetEventType() == inType)
@@ -165,11 +168,11 @@ int EventManager::Update(nanoseconds maxNanoSeconds)
 	while (!this->m_EventQueues[queueToProcess].empty())
 	{
 		// Pop the front of the queue	
-		auto pEvent = this->m_EventQueues[queueToProcess].front();
+		const IEventPtr pEvent = this->m_EventQueues[queueToProcess].front();
 		this->m_EventQueues[queueToProcess].pop_front();
 
 		// Find all the delegate functions registered for this event
-		auto findIt = this->m_AllListeners.find(pEvent->VGetEventType());
+		const auto findIt = this->m_AllListeners.find(pEvent->VGetEventType());
 		if (findIt != this->m_AllListeners.end())
 		{
 			const auto& eventListeners = findIt->second;

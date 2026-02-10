@@ -2,12 +2,13 @@
 //
 
 #pragma once
+
 #include <list>
 #include <map>
 #include "ThirdParty/FastDelegate/FastDelegate.h"
 #include "EngineUtility.h"
 #include "Multicore.h"
-
+	
 BEGIN_ENGINE_NAMESPACE
 	
 typedef fastdelegate::FastDelegate1<const IEventPtr&, void> EventListener;
@@ -64,6 +65,6 @@ private:
 	int m_ActiveQueue;
 
 	ThreadSafeEventQueue m_RealTimeEventQueue;
-}; // end class EventManager declaration
+}; // end class EventManager declaration	
 	
 END_ENGINE_NAMESPACE
