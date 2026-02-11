@@ -3,6 +3,8 @@
 ## Overview
 This is a C++ chess game built with an engine-style architecture: a clean game state core, event-driven input and logic flow, and a Raylib-powered 2D view. The rules layer implements full move generation for every piece, with validation for check safety, castling, en passant, and promotion. The UI includes board rendering, move highlighting, and a dedicated promotion picker.
 
+I personally wrote every single line of code in this repository. No AI tools were used (except for this very readme), so if there are any bugs, it's a totally intended feature :)
+
 ## Key Features
 - Event-driven game loop with decoupled input, logic, and rendering.
 - Full move-generation and rule validation per piece.
